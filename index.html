@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>Dữ liệu kho TDB</title>
+    <title>TỒN KHO TDB</title>
     <!-- Google Font & modern reset -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <!-- Papa Parse for robust CSV handling -->
@@ -187,7 +187,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.95rem;
-            min-width: 700px;
+            min-width: 600px;
         }
 
         th {
@@ -234,19 +234,10 @@
         .stock {
             font-weight: 700;
             font-size: 1.05rem;
+            white-space: nowrap;
         }
         .stock-positive { color: #0e7b5c; }   /* xanh đậm doanh nghiệp */
         .stock-zero, .stock-negative { color: #c5352a; font-weight: 700; } /* đỏ */
-
-        .unit {
-            color: #4f6f84;
-            font-weight: 500;
-            background: #f0f5f9;
-            padding: 5px 14px;
-            border-radius: 30px;
-            display: inline-block;
-            font-size: 0.8rem;
-        }
 
         .empty-message {
             padding: 48px 20px;
@@ -306,10 +297,11 @@
     <div class="dashboard">
         <div class="title-section">
             <h1>
-                📦 Tồn kho TDB
+                📦 DỮ LIỆU KHO TDB
+                <span>real-time</span>
             </h1>
             <div class="update-badge">
-                <span>⏳</span> Dữ liệu trực tiếp từ Drive
+                <span>⏳</span> Dữ liệu từ Drive
             </div>
         </div>
 
@@ -322,8 +314,8 @@
                 </select>
             </div>
             <div class="filter-group">
-                <span class="filter-label">🔍 Mã sản phẩm</span>
-                <input type="text" id="searchInput" placeholder="Nhập mã barcode, tên mã..." autocomplete="off">
+                <span class="filter-label">🔍 Tìm theo mã</span>
+                <input type="text" id="searchInput" placeholder="Nhập kích thước, tên mã giấy..." autocomplete="off">
             </div>
             <button class="reset-btn" id="resetFilterBtn">
                 ⟲ Đặt lại
@@ -339,7 +331,7 @@
         </div>
 
         <div class="footer-note">
-            <span>🔄 Dữ liệu trực tiếp từ file QUẢN LÝ KHO - SX TDB</span>
+            <span>🔄 Dữ liệu update trực tiếp từ file QUẢN LÝ KHO TDB - MADE BY HUY</span>
         </div>
     </div>
 
@@ -353,7 +345,6 @@
             // global data store
             let masterData = [];               // array of { category, code, quantity, unit, rawQ }
             let uniqueCategories = new Set();
-            let headerMap = {};               // map column name to index
 
             // DOM elements
             const categorySelect = document.getElementById('categorySelect');
@@ -366,14 +357,14 @@
                 if (val === undefined || val === null) return 0;
                 const str = String(val).trim();
                 if (str === '' || str === '-' || str === '—' || str.toLowerCase() === 'null') return 0;
-                const num = parseFloat(str.replace(/,/g, '.')); // vietnam format may use comma? but we treat as float
+                const num = parseFloat(str.replace(/,/g, '.')); 
                 return isNaN(num) ? 0 : num;
             }
 
             // ---------- fetch & parse CSV with PapaParse ----------
             async function loadInventory() {
                 try {
-                    const response = await fetch(CSV_URL, { cache: "no-store" });  // no-cache for realtime
+                    const response = await fetch(CSV_URL, { cache: "no-store" });
                     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
                     const csvText = await response.text();
                     
@@ -388,7 +379,7 @@
                                         return;
                                     }
 
-                                    // ---------- tìm dòng header: cột đầu là "DANH MỤC" (không phân biệt hoa/thường) ----------
+                                    // tìm dòng header: cột đầu là "DANH MỤC"
                                     let headerRowIndex = -1;
                                     for (let i = 0; i < Math.min(15, rows.length); i++) {
                                         const row = rows[i];
@@ -400,11 +391,8 @@
                                             }
                                         }
                                     }
-                                    // fallback: nếu không tìm thấy, dùng dòng 3 (index 2) theo mô tả
                                     if (headerRowIndex === -1 && rows.length > 2) {
-                                        // kiểm tra dòng thứ 3 có vẻ là header
-                                        if (rows[2] && rows[2][0] && rows[2][0].toString().includes('DANH')) headerRowIndex = 2;
-                                        else headerRowIndex = 2; // mạnh dạn lấy dòng thứ 3
+                                        headerRowIndex = 2; // fallback dòng thứ 3
                                     }
 
                                     if (headerRowIndex === -1) {
@@ -413,7 +401,6 @@
                                     }
 
                                     const headerRow = rows[headerRowIndex];
-                                    // map cột: tìm chỉ mục của các cột quan trọng
                                     const colMap = { category: -1, code: -1, stock: -1, unit: -1 };
                                     headerRow.forEach((cell, idx) => {
                                         const val = (cell || '').toString().trim().toUpperCase();
@@ -423,29 +410,25 @@
                                         else if (val.includes('ĐƠN VỊ') || val.includes('DON VI')) colMap.unit = idx;
                                     });
 
-                                    // nếu thiếu cột, dùng index mặc định: 0,1,2,3
                                     if (colMap.category === -1) colMap.category = 0;
                                     if (colMap.code === -1) colMap.code = 1;
                                     if (colMap.stock === -1) colMap.stock = 2;
                                     if (colMap.unit === -1) colMap.unit = 3;
 
-                                    // thu thập dữ liệu từ các dòng sau header
                                     const dataRows = rows.slice(headerRowIndex + 1);
                                     const items = [];
 
                                     for (let row of dataRows) {
                                         if (!row || row.length < 2) continue;
-                                        // đảm bảo row có đủ độ dài
-                                        while (row.length <= colMap.unit) row.push(''); 
+                                        while (row.length <= colMap.unit) row.push('');
                                         
                                         const category = row[colMap.category] ? row[colMap.category].toString().trim() : '';
                                         const code = row[colMap.code] ? row[colMap.code].toString().trim() : '';
                                         const rawQ = row[colMap.stock] ? row[colMap.stock].toString().trim() : '-';
                                         const unit = row[colMap.unit] ? row[colMap.unit].toString().trim() : '';
 
-                                        // bỏ qua dòng trống hoặc không có mã/category
                                         if (category === '' && code === '') continue;
-                                        if (category === '' || code === '') continue; // cần hiển thị category và mã
+                                        if (category === '' || code === '') continue;
 
                                         const quantity = parseQuantity(rawQ);
                                         items.push({
@@ -453,7 +436,7 @@
                                             code,
                                             quantity,
                                             unit,
-                                            rawQ: rawQ // giữ lại để hiển thị
+                                            rawQ: rawQ
                                         });
                                     }
 
@@ -488,13 +471,23 @@
                 const keyword = searchInput.value.trim().toLowerCase();
 
                 return masterData.filter(item => {
-                    // lọc category
                     if (selectedCat !== 'ALL' && item.category !== selectedCat) return false;
-                    // lọc theo mã
                     if (keyword !== '') {
                         return item.code.toLowerCase().includes(keyword);
                     }
                     return true;
+                });
+            }
+
+            // ---------- escape html ----------
+            function escapeHTML(str) {
+                if (!str) return '';
+                return String(str).replace(/[&<>"]/g, function(c) {
+                    if (c === '&') return '&amp;';
+                    if (c === '<') return '&lt;';
+                    if (c === '>') return '&gt;';
+                    if (c === '"') return '&quot;';
+                    return c;
                 });
             }
 
@@ -517,23 +510,27 @@
                                             <th>Danh mục</th>
                                             <th>Mã sản phẩm</th>
                                             <th>Tồn kho</th>
-                                            <th>Đơn vị</th>
                                         </tr>
                                     </thead>
                                     <tbody>`;
                     
                     filtered.forEach(item => {
                         const stockClass = item.quantity > 0 ? 'stock-positive' : 'stock-zero';
-                        // hiển thị số tồn: nếu rawQ là '-' hoặc 0, hiện 0
-                        let displayQ = item.rawQ;
-                        if (item.quantity === 0) displayQ = '0';   // chuẩn hóa về 0
-                        else displayQ = item.quantity;           // số dương
+                        // --- hiển thị số tồn giữ nguyên định dạng gốc + đơn vị đi kèm ---
+                        let displayQty;
+                        if (item.quantity > 0) {
+                            displayQty = item.rawQ;   // giữ nguyên "2.530", "1.000", ...
+                        } else {
+                            displayQty = '0';         // tồn = 0 hiển thị 0
+                        }
+                        // ghép với đơn vị (nếu có)
+                        const unitText = item.unit ? ` ${escapeHTML(item.unit)}` : '';
+                        const stockWithUnit = `${escapeHTML(displayQty)}${unitText}`;
 
                         html += `<tr>
                                     <td><span class="category-badge">${escapeHTML(item.category)}</span></td>
                                     <td class="code-cell"><strong>${escapeHTML(item.code)}</strong></td>
-                                    <td class="stock ${stockClass}">${displayQ}</td>
-                                    <td><span class="unit">${escapeHTML(item.unit || '—')}</span></td>
+                                    <td class="stock ${stockClass}">${stockWithUnit}</td>
                                 </tr>`;
                     });
 
@@ -547,18 +544,6 @@
                 tableContainer.innerHTML = html;
             }
 
-            // nhẹ nhàng escape
-            function escapeHTML(str) {
-                if (!str) return '';
-                return String(str).replace(/[&<>"]/g, function(c) {
-                    if (c === '&') return '&amp;';
-                    if (c === '<') return '&lt;';
-                    if (c === '>') return '&gt;';
-                    if (c === '"') return '&quot;';
-                    return c;
-                });
-            }
-
             // ---------- refresh toàn bộ: load data, build giao diện ----------
             async function refreshDashboard() {
                 tableContainer.innerHTML = `<div class="loading-indicator"><div class="spinner"></div><span>Đang đồng bộ kho từ Google Drive…</span></div>`;
@@ -566,26 +551,20 @@
                 try {
                     const items = await loadInventory();
                     
-                    // gán vào masterData
                     masterData = items;
                     
-                    // cập nhật categories
                     uniqueCategories.clear();
                     items.forEach(item => uniqueCategories.add(item.category));
                     
-                    // render dropdown
                     renderCategoryFilter();
                     
-                    // mặc định chọn ALL, search rỗng
                     categorySelect.value = 'ALL';
                     searchInput.value = '';
                     
-                    // render table toàn bộ
                     renderTable(masterData);
                     
                 } catch (error) {
                     console.error('Lỗi tải dữ liệu:', error);
-                    // Không làm kho mẫu – hiển thị lỗi rõ ràng
                     tableContainer.innerHTML = `
                         <div class="error-banner">
                             <strong style="font-size:1.1rem;">⛔ Không thể tải dữ liệu từ Google Sheets</strong><br>
@@ -595,16 +574,14 @@
                             <span style="display: block; margin-top: 14px;">🔄 Tải lại trang để thử kết nối lại.</span>
                         </div>
                     `;
-                    // reset master data
                     masterData = [];
                     uniqueCategories.clear();
-                    renderCategoryFilter(); // chỉ còn ALL
+                    renderCategoryFilter();
                 }
             }
 
             // ---------- setup event listeners ----------
             function bindEvents() {
-                // lọc khi thay đổi category hoặc gõ search
                 categorySelect.addEventListener('change', () => {
                     if (masterData.length) renderTable(filterData());
                 });
@@ -613,7 +590,6 @@
                     if (masterData.length) renderTable(filterData());
                 });
 
-                // nút reset: về tất cả danh mục và xóa ô search
                 resetBtn.addEventListener('click', () => {
                     categorySelect.value = 'ALL';
                     searchInput.value = '';
@@ -627,5 +603,4 @@
         })();
     </script>
 </body>
-
 </html>
