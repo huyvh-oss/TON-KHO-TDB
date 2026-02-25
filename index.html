@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>TỒN KHO TDB</title>
+    <title>KHO SAN XUAT TDB</title>
     <!-- Google Font & modern reset -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <!-- Papa Parse for robust CSV handling -->
@@ -297,10 +297,11 @@
     <div class="dashboard">
         <div class="title-section">
             <h1>
-                📦 DỮ LIỆU KHO SẢN XUẤT TDB
+                📦 Thống Kê Tồn Kho TDB
+                <span>Dữ liệu theo thời gian thực</span>
             </h1>
             <div class="update-badge">
-                <span>⏳</span> Dữ liệu lấy từ Google Drive
+                <span>⏳</span> MADE BY HUY TDB
             </div>
         </div>
 
@@ -313,8 +314,8 @@
                 </select>
             </div>
             <div class="filter-group">
-                <span class="filter-label">🔍 Tìm theo mã</span>
-                <input type="text" id="searchInput" placeholder="Nhập kích thước, tên mã giấy..." autocomplete="off">
+                <span class="filter-label">🔍 Mã sản phẩm</span>
+                <input type="text" id="searchInput" placeholder="Nhập mã sản phẩm hoặc khổ giấy..." autocomplete="off">
             </div>
             <button class="reset-btn" id="resetFilterBtn">
                 ⟲ Đặt lại
@@ -330,7 +331,7 @@
         </div>
 
         <div class="footer-note">
-            <span>🔄 Dữ liệu update trực tiếp từ file QUẢN LÝ KHO TDB - MADE BY HUY</span>
+            <span>🔄 Dữ liệu lấy trực tiếp từ file QUẢN LÝ KHO - SX TDB</span>
         </div>
     </div>
 
@@ -360,11 +361,28 @@
                 return isNaN(num) ? 0 : num;
             }
 
+            // ---------- fetch with retry and cache buster ----------
+            async function fetchWithRetry(url, options = {}, retries = 3) {
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        // Thêm cache buster để tránh lỗi 500 do cache cũ
+                        const cacheBuster = `${url}${url.includes('?') ? '&' : '?'}_=${Date.now()}`;
+                        const response = await fetch(cacheBuster, { ...options, cache: "no-store" });
+                        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                        return response;
+                    } catch (err) {
+                        const isLastTry = i === retries - 1;
+                        if (isLastTry) throw err;
+                        // Chờ trước khi thử lại (1s, 2s)
+                        await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+                    }
+                }
+            }
+
             // ---------- fetch & parse CSV with PapaParse ----------
             async function loadInventory() {
                 try {
-                    const response = await fetch(CSV_URL, { cache: "no-store" });
-                    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                    const response = await fetchWithRetry(CSV_URL);
                     const csvText = await response.text();
                     
                     return new Promise((resolve, reject) => {
@@ -395,7 +413,7 @@
                                     }
 
                                     if (headerRowIndex === -1) {
-                                        reject(new Error('Không tìm thấy dòng tiêu đề (DANH MỤC, MÃ, ...)'));
+                                        reject(new Error('Không tìm thấy dòng mã sản phẩm phù hợp (DANH MỤC, MÃ, ...)'));
                                         return;
                                     }
 
@@ -537,7 +555,7 @@
                 }
                 // thêm thông tin tổng số
                 html += `<div style="margin-top: 20px; font-size: 0.9rem; color: #3a5e70; font-weight: 500; display: flex; justify-content: space-between; align-items: center;">
-                            <span>📋 Hiện tại có: <strong>${filtered.length}</strong> mã trong danh mục này.</span>
+                            <span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm tìm thấy phù hợp với bộ lọc</span>
                         </div>`;
                 tableContainer.innerHTML = html;
             }
@@ -602,5 +620,3 @@
     </script>
 </body>
 </html>
-
-
