@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>KHO SAN XUAT TDB</title>
+    <title>THỐNG KÊ KHO TDB</title>
     <!-- Google Font & modern reset -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <!-- Papa Parse for robust CSV handling -->
@@ -83,6 +83,50 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+        }
+
+        /* warehouse selector row */
+        .warehouse-row {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            background: #f8fafd;
+            padding: 12px 20px;
+            border-radius: 60px;
+            border: 1px solid #e2edf4;
+        }
+        .warehouse-label {
+            font-weight: 600;
+            color: #144a62;
+            background: #eaf2f8;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+        }
+        .warehouse-selector {
+            display: flex;
+            gap: 12px;
+            background: white;
+            border-radius: 50px;
+            padding: 4px;
+            border: 1px solid #cde0e9;
+        }
+        .warehouse-option {
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+            background: transparent;
+            color: #3f637b;
+        }
+        .warehouse-option.active {
+            background: #12799f;
+            color: white;
+            box-shadow: 0 2px 6px rgba(18,121,159,0.2);
         }
 
         /* filter bar – modern, glassy */
@@ -236,8 +280,8 @@
             font-size: 1.05rem;
             white-space: nowrap;
         }
-        .stock-positive { color: #0e7b5c; }   /* xanh đậm doanh nghiệp */
-        .stock-zero, .stock-negative { color: #c5352a; font-weight: 700; } /* đỏ */
+        .stock-positive { color: #0e7b5c; }
+        .stock-zero, .stock-negative { color: #c5352a; font-weight: 700; }
 
         .empty-message {
             padding: 48px 20px;
@@ -286,22 +330,26 @@
             font-weight: 500;
             margin-bottom: 24px;
         }
-        a {
-            color: #0a6b81;
-            text-decoration: none;
-            font-weight: 600;
-        }
     </style>
 </head>
 <body>
     <div class="dashboard">
         <div class="title-section">
             <h1>
-                📦 Thống Kê Tồn Kho TDB
-                <span>Dữ liệu theo thời gian thực</span>
+                📦 TDB Kho Giấy & Mực
+                <span>Made by Huy</span>
             </h1>
             <div class="update-badge">
-                <span>⏳</span> MADE BY HUY TDB
+                <span>⏳</span> Real-time
+            </div>
+        </div>
+
+        <!-- Warehouse selector -->
+        <div class="warehouse-row">
+            <span class="warehouse-label">🏭 HÃY CHỌN KHO MUỐN TÌM </span>
+            <div class="warehouse-selector" id="warehouseSelector">
+                <div class="warehouse-option active" data-warehouse="TDB">KHO TDB</div>
+                <div class="warehouse-option" data-warehouse="SAM">KHO SAM</div>
             </div>
         </div>
 
@@ -315,7 +363,7 @@
             </div>
             <div class="filter-group">
                 <span class="filter-label">🔍 Mã sản phẩm</span>
-                <input type="text" id="searchInput" placeholder="Nhập mã sản phẩm hoặc khổ giấy..." autocomplete="off">
+                <input type="text" id="searchInput" placeholder="Nhập mã barcode, tên mã..." autocomplete="off">
             </div>
             <button class="reset-btn" id="resetFilterBtn">
                 ⟲ Đặt lại
@@ -331,7 +379,7 @@
         </div>
 
         <div class="footer-note">
-            <span>🔄 Dữ liệu lấy trực tiếp từ file QUẢN LÝ KHO - SX TDB</span>
+            <span>🔄 Dữ liệu trực tiếp từ Google Sheets - Liên hệ Huy khi có lỗi</span>
         </div>
     </div>
 
@@ -339,138 +387,145 @@
         (function() {
             'use strict';
 
-            // ---------- CONFIG ----------
-            const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS16evkAb1vdJkvwdyCOJf10_k5ONA_REYJ0_Cch1i0c-RrjYtcQoxqxXivlhvnUQ/pub?output=csv';
-            
-            // global data store
-            let masterData = [];               // array of { category, code, quantity, unit, rawQ }
+            // ---------- CONFIG: 2 kho với URL xuất bản chính xác ----------
+            const WAREHOUSE_URLS = {
+                TDB: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS16evkAb1vdJkvwdyCOJf10_k5ONA_REYJ0_Cch1i0c-RrjYtcQoxqxXivlhvnUQ/pub?gid=270954585&single=true&output=csv',
+                SAM: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS16evkAb1vdJkvwdyCOJf10_k5ONA_REYJ0_Cch1i0c-RrjYtcQoxqxXivlhvnUQ/pub?gid=877859193&single=true&output=csv'
+            };
+
+            let currentWarehouse = 'TDB';   // 'TDB' hoặc 'SAM'
+            let masterData = [];             // array of { category, code, quantity, unit, rawQ }
             let uniqueCategories = new Set();
 
             // DOM elements
+            const warehouseOptions = document.querySelectorAll('.warehouse-option');
             const categorySelect = document.getElementById('categorySelect');
             const searchInput = document.getElementById('searchInput');
             const resetBtn = document.getElementById('resetFilterBtn');
             const tableContainer = document.getElementById('tableContainer');
 
-            // ---------- helper: parse quantity to number, handle '-' and text ----------
+            // ---------- helper: parse quantity (giữ nguyên dấu chấm, không mất số 0) ----------
             function parseQuantity(val) {
                 if (val === undefined || val === null) return 0;
                 const str = String(val).trim();
                 if (str === '' || str === '-' || str === '—' || str.toLowerCase() === 'null') return 0;
-                const num = parseFloat(str.replace(/,/g, '.')); 
+                const num = parseFloat(str.replace(/,/g, '.'));
                 return isNaN(num) ? 0 : num;
             }
 
-            // ---------- fetch with retry and cache buster ----------
-            async function fetchWithRetry(url, options = {}, retries = 3) {
-                for (let i = 0; i < retries; i++) {
+            // ---------- fetch with super retry (exponential backoff, single URL) ----------
+            async function fetchWithRetry(url, maxRetries = 7) {
+                let lastError;
+                for (let attempt = 0; attempt < maxRetries; attempt++) {
                     try {
-                        // Thêm cache buster để tránh lỗi 500 do cache cũ
-                        const cacheBuster = `${url}${url.includes('?') ? '&' : '?'}_=${Date.now()}`;
-                        const response = await fetch(cacheBuster, { ...options, cache: "no-store" });
-                        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-                        return response;
+                        const cacheBuster = `${url}${url.includes('?') ? '&' : '?'}_cb=${Date.now()}_${Math.random().toString(36).substring(2,10)}_r${attempt}`;
+                        const response = await fetch(cacheBuster, {
+                            cache: "no-store",
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                'Accept': 'text/csv,text/plain,*/*',
+                                'Referer': 'https://docs.google.com/'
+                            },
+                            mode: 'cors'
+                        });
+
+                        if (!response.ok) {
+                            if (response.status === 500) {
+                                const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                                console.log(`Got 500 on ${url}, retry ${attempt+1} after ${delay}ms`);
+                                await new Promise(r => setTimeout(r, delay));
+                                continue;
+                            }
+                            throw new Error(`HTTP error ${response.status}`);
+                        }
+
+                        const text = await response.text();
+                        if (text.toLowerCase().includes('<!doctype html>') || (text.includes('Google Drive') && text.includes('Quota'))) {
+                            throw new Error('Received HTML instead of CSV');
+                        }
+                        return text;
                     } catch (err) {
-                        const isLastTry = i === retries - 1;
-                        if (isLastTry) throw err;
-                        // Chờ trước khi thử lại (1s, 2s)
-                        await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+                        lastError = err;
+                        console.log(`Attempt ${attempt+1} failed: ${err.message}`);
+                        await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
                     }
                 }
+                throw lastError || new Error('All retries failed');
             }
 
-            // ---------- fetch & parse CSV with PapaParse ----------
-            async function loadInventory() {
-                try {
-                    const response = await fetchWithRetry(CSV_URL);
-                    const csvText = await response.text();
-                    
-                    return new Promise((resolve, reject) => {
-                        Papa.parse(csvText, {
-                            skipEmptyLines: true,
-                            complete: (result) => {
-                                try {
-                                    const rows = result.data;
-                                    if (!rows || rows.length < 3) {
-                                        reject(new Error('File CSV không đủ dòng dữ liệu'));
-                                        return;
-                                    }
+            // ---------- tải và parse CSV từ URL hiện tại ----------
+            async function loadInventory(warehouse) {
+                const url = WAREHOUSE_URLS[warehouse];
+                if (!url) throw new Error(`Không tìm thấy URL cho kho ${warehouse}`);
+                const csvText = await fetchWithRetry(url);
+                return new Promise((resolve, reject) => {
+                    Papa.parse(csvText, {
+                        skipEmptyLines: true,
+                        complete: (result) => {
+                            try {
+                                const rows = result.data;
+                                if (!rows || rows.length < 3) {
+                                    reject(new Error('File CSV không đủ dòng dữ liệu'));
+                                    return;
+                                }
 
-                                    // tìm dòng header: cột đầu là "DANH MỤC"
-                                    let headerRowIndex = -1;
-                                    for (let i = 0; i < Math.min(15, rows.length); i++) {
-                                        const row = rows[i];
-                                        if (row && row.length > 0) {
-                                            const firstCell = row[0] ? row[0].toString().trim().toUpperCase() : '';
-                                            if (firstCell.includes('DANH MỤC') || firstCell === 'DANH MỤC' || firstCell === 'DANH MỤC SẢN PHẨM') {
-                                                headerRowIndex = i;
-                                                break;
-                                            }
+                                // tìm dòng header chứa "DANH MỤC"
+                                let headerRowIndex = -1;
+                                for (let i = 0; i < Math.min(15, rows.length); i++) {
+                                    const row = rows[i];
+                                    if (row && row.length > 0) {
+                                        const firstCell = row[0] ? row[0].toString().trim().toUpperCase() : '';
+                                        if (firstCell.includes('DANH MỤC') || firstCell === 'DANH MỤC' || firstCell === 'DANH MỤC SẢN PHẨM') {
+                                            headerRowIndex = i;
+                                            break;
                                         }
                                     }
-                                    if (headerRowIndex === -1 && rows.length > 2) {
-                                        headerRowIndex = 2; // fallback dòng thứ 3
-                                    }
-
-                                    if (headerRowIndex === -1) {
-                                        reject(new Error('Không tìm thấy dòng mã sản phẩm phù hợp (DANH MỤC, MÃ, ...)'));
-                                        return;
-                                    }
-
-                                    const headerRow = rows[headerRowIndex];
-                                    const colMap = { category: -1, code: -1, stock: -1, unit: -1 };
-                                    headerRow.forEach((cell, idx) => {
-                                        const val = (cell || '').toString().trim().toUpperCase();
-                                        if (val.includes('DANH MỤC') || val.includes('DANH MỤC')) colMap.category = idx;
-                                        else if (val.includes('MÃ') || val === 'MA') colMap.code = idx;
-                                        else if (val.includes('TỒN') || val.includes('TON') || val.includes('TỔN HIỆN TẠI')) colMap.stock = idx;
-                                        else if (val.includes('ĐƠN VỊ') || val.includes('DON VI')) colMap.unit = idx;
-                                    });
-
-                                    if (colMap.category === -1) colMap.category = 0;
-                                    if (colMap.code === -1) colMap.code = 1;
-                                    if (colMap.stock === -1) colMap.stock = 2;
-                                    if (colMap.unit === -1) colMap.unit = 3;
-
-                                    const dataRows = rows.slice(headerRowIndex + 1);
-                                    const items = [];
-
-                                    for (let row of dataRows) {
-                                        if (!row || row.length < 2) continue;
-                                        while (row.length <= colMap.unit) row.push('');
-                                        
-                                        const category = row[colMap.category] ? row[colMap.category].toString().trim() : '';
-                                        const code = row[colMap.code] ? row[colMap.code].toString().trim() : '';
-                                        const rawQ = row[colMap.stock] ? row[colMap.stock].toString().trim() : '-';
-                                        const unit = row[colMap.unit] ? row[colMap.unit].toString().trim() : '';
-
-                                        if (category === '' && code === '') continue;
-                                        if (category === '' || code === '') continue;
-
-                                        const quantity = parseQuantity(rawQ);
-                                        items.push({
-                                            category,
-                                            code,
-                                            quantity,
-                                            unit,
-                                            rawQ: rawQ
-                                        });
-                                    }
-
-                                    resolve(items);
-                                } catch (e) {
-                                    reject(e);
                                 }
-                            },
-                            error: (error) => reject(error)
-                        });
+                                if (headerRowIndex === -1 && rows.length > 2) headerRowIndex = 2;
+
+                                if (headerRowIndex === -1) {
+                                    reject(new Error('Không tìm thấy dòng tiêu đề'));
+                                    return;
+                                }
+
+                                const headerRow = rows[headerRowIndex];
+                                const colMap = { category: -1, code: -1, stock: -1, unit: -1 };
+                                headerRow.forEach((cell, idx) => {
+                                    const val = (cell || '').toString().trim().toUpperCase();
+                                    if (val.includes('DANH MỤC')) colMap.category = idx;
+                                    else if (val.includes('MÃ') || val === 'MA') colMap.code = idx;
+                                    else if (val.includes('TỒN') || val.includes('TON') || val.includes('TỔN HIỆN TẠI')) colMap.stock = idx;
+                                    else if (val.includes('ĐƠN VỊ') || val.includes('DON VI')) colMap.unit = idx;
+                                });
+
+                                if (colMap.category === -1) colMap.category = 0;
+                                if (colMap.code === -1) colMap.code = 1;
+                                if (colMap.stock === -1) colMap.stock = 2;
+                                if (colMap.unit === -1) colMap.unit = 3;
+
+                                const dataRows = rows.slice(headerRowIndex + 1);
+                                const items = [];
+                                for (let row of dataRows) {
+                                    if (!row || row.length < 2) continue;
+                                    while (row.length <= colMap.unit) row.push('');
+                                    const category = row[colMap.category] ? row[colMap.category].toString().trim() : '';
+                                    const code = row[colMap.code] ? row[colMap.code].toString().trim() : '';
+                                    const rawQ = row[colMap.stock] ? row[colMap.stock].toString().trim() : '-';
+                                    const unit = row[colMap.unit] ? row[colMap.unit].toString().trim() : '';
+                                    if (category === '' && code === '') continue;
+                                    if (category === '' || code === '') continue;
+                                    const quantity = parseQuantity(rawQ);
+                                    items.push({ category, code, quantity, unit, rawQ });
+                                }
+                                resolve(items);
+                            } catch (e) { reject(e); }
+                        },
+                        error: (error) => reject(error)
                     });
-                } catch (error) {
-                    throw error;
-                }
+                });
             }
 
-            // ---------- render dropdown categories từ masterData ----------
+            // ---------- render dropdown danh mục ----------
             function renderCategoryFilter() {
                 const categories = Array.from(uniqueCategories).sort((a,b) => a.localeCompare(b, 'vi'));
                 categorySelect.innerHTML = '<option value="ALL">⚡ Tất cả danh mục</option>';
@@ -482,21 +537,18 @@
                 });
             }
 
-            // ---------- lọc dữ liệu dựa trên category & search ----------
+            // ---------- lọc dữ liệu ----------
             function filterData() {
                 const selectedCat = categorySelect.value;
                 const keyword = searchInput.value.trim().toLowerCase();
-
                 return masterData.filter(item => {
                     if (selectedCat !== 'ALL' && item.category !== selectedCat) return false;
-                    if (keyword !== '') {
-                        return item.code.toLowerCase().includes(keyword);
-                    }
+                    if (keyword !== '') return item.code.toLowerCase().includes(keyword);
                     return true;
                 });
             }
 
-            // ---------- escape html ----------
+            // ---------- escape HTML ----------
             function escapeHTML(str) {
                 if (!str) return '';
                 return String(str).replace(/[&<>"]/g, function(c) {
@@ -508,10 +560,9 @@
                 });
             }
 
-            // ---------- render bảng với dữ liệu đã lọc ----------
+            // ---------- render bảng ----------
             function renderTable(filtered) {
                 if (!filtered) filtered = masterData;
-                
                 let html = '';
                 if (filtered.length === 0) {
                     html = `<div class="empty-message">
@@ -521,91 +572,89 @@
                             </div>`;
                 } else {
                     html = `<div class="table-wrapper">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Danh mục</th>
-                                            <th>Mã sản phẩm</th>
-                                            <th>Tồn kho</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                    
+                            <table>
+                                <thead>
+                                    <tr><th>Danh mục</th><th>Mã sản phẩm</th><th>Tồn kho</th></tr>
+                                </thead>
+                                <tbody>`;
                     filtered.forEach(item => {
                         const stockClass = item.quantity > 0 ? 'stock-positive' : 'stock-zero';
-                        // --- hiển thị số tồn giữ nguyên định dạng gốc + đơn vị đi kèm ---
-                        let displayQty;
-                        if (item.quantity > 0) {
-                            displayQty = item.rawQ;   // giữ nguyên "2.530", "1.000", ...
-                        } else {
-                            displayQty = '0';         // tồn = 0 hiển thị 0
-                        }
-                        // ghép với đơn vị (nếu có)
+                        let displayQty = item.quantity > 0 ? item.rawQ : '0';
                         const unitText = item.unit ? ` ${escapeHTML(item.unit)}` : '';
                         const stockWithUnit = `${escapeHTML(displayQty)}${unitText}`;
-
                         html += `<tr>
                                     <td><span class="category-badge">${escapeHTML(item.category)}</span></td>
                                     <td class="code-cell"><strong>${escapeHTML(item.code)}</strong></td>
                                     <td class="stock ${stockClass}">${stockWithUnit}</td>
-                                </tr>`;
+                                 </tr>`;
                     });
-
                     html += `</tbody></table></div>`;
                 }
-                // thêm thông tin tổng số
-                html += `<div style="margin-top: 20px; font-size: 0.9rem; color: #3a5e70; font-weight: 500; display: flex; justify-content: space-between; align-items: center;">
-                            <span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm tìm thấy phù hợp với bộ lọc</span>
-                        </div>`;
+                html += `<div style="margin-top: 20px; font-size: 0.9rem; color: #3a5e70; font-weight: 500; display: flex; justify-content: space-between;">
+                            <span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm</span>
+                            <span>✔ Nhớ chọn đúng kho cần tìm</span>
+                         </div>`;
                 tableContainer.innerHTML = html;
             }
 
-            // ---------- refresh toàn bộ: load data, build giao diện ----------
+            // ---------- tải dữ liệu cho kho hiện tại ----------
             async function refreshDashboard() {
-                tableContainer.innerHTML = `<div class="loading-indicator"><div class="spinner"></div><span>Đang đồng bộ kho từ Google Drive…</span></div>`;
-                
+                tableContainer.innerHTML = `<div class="loading-indicator"><div class="spinner"></div><span>Đang tải kho ${currentWarehouse} từ Google Sheets…</span></div>`;
                 try {
-                    const items = await loadInventory();
-                    
+                    const items = await loadInventory(currentWarehouse);
                     masterData = items;
-                    
                     uniqueCategories.clear();
                     items.forEach(item => uniqueCategories.add(item.category));
-                    
                     renderCategoryFilter();
-                    
                     categorySelect.value = 'ALL';
                     searchInput.value = '';
-                    
                     renderTable(masterData);
-                    
                 } catch (error) {
                     console.error('Lỗi tải dữ liệu:', error);
                     tableContainer.innerHTML = `
                         <div class="error-banner">
-                            <strong style="font-size:1.1rem;">⛔ Không thể tải dữ liệu từ Google Sheets</strong><br>
+                            <strong>⛔ Không thể tải dữ liệu từ Google Sheets (kho ${currentWarehouse})</strong><br>
                             • Kiểm tra kết nối mạng<br>
-                            • Đường dẫn CSV: <code style="background: #ffe0db; padding: 4px 8px; border-radius: 6px;">${CSV_URL}</code><br>
+                            • Đường dẫn CSV: <code style="background:#ffe0db;padding:4px 8px;border-radius:6px;">${WAREHOUSE_URLS[currentWarehouse]}</code><br>
                             • Chi tiết lỗi: ${error.message || 'Không xác định'}<br>
-                            <span style="display: block; margin-top: 14px;">🔄 Tải lại trang để thử kết nối lại.</span>
-                        </div>
-                    `;
+                            <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
+                                <button onclick="location.reload()" style="background:#12799f;color:white;border:none;padding:10px 24px;border-radius:40px;font-weight:600;cursor:pointer;">🔄 Tải lại trang</button>
+                                <button onclick="window.retryLoad()" style="background:#f0f5fa;color:#144a62;border:1.5px solid #cde0e9;padding:10px 24px;border-radius:40px;font-weight:600;cursor:pointer;">⚡ Thử lại ngay</button>
+                            </div>
+                        </div>`;
+                    window.retryLoad = () => refreshDashboard();
                     masterData = [];
                     uniqueCategories.clear();
                     renderCategoryFilter();
                 }
             }
 
-            // ---------- setup event listeners ----------
-            function bindEvents() {
-                categorySelect.addEventListener('change', () => {
-                    if (masterData.length) renderTable(filterData());
+            // ---------- xử lý chuyển kho ----------
+            function setWarehouse(warehouse) {
+                if (warehouse === currentWarehouse) return;
+                currentWarehouse = warehouse;
+                // Cập nhật UI active
+                warehouseOptions.forEach(opt => {
+                    if (opt.getAttribute('data-warehouse') === warehouse) {
+                        opt.classList.add('active');
+                    } else {
+                        opt.classList.remove('active');
+                    }
                 });
-                
-                searchInput.addEventListener('input', () => {
-                    if (masterData.length) renderTable(filterData());
-                });
+                // Tải lại dữ liệu
+                refreshDashboard();
+            }
 
+            // ---------- sự kiện ----------
+            function bindEvents() {
+                warehouseOptions.forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const warehouse = opt.getAttribute('data-warehouse');
+                        setWarehouse(warehouse);
+                    });
+                });
+                categorySelect.addEventListener('change', () => { if (masterData.length) renderTable(filterData()); });
+                searchInput.addEventListener('input', () => { if (masterData.length) renderTable(filterData()); });
                 resetBtn.addEventListener('click', () => {
                     categorySelect.value = 'ALL';
                     searchInput.value = '';
@@ -613,7 +662,6 @@
                 });
             }
 
-            // ---------- khởi động ----------
             bindEvents();
             refreshDashboard();
         })();
