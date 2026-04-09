@@ -349,7 +349,7 @@
             <span class="warehouse-label">🏭 HÃY CHỌN KHO MUỐN TÌM </span>
             <div class="warehouse-selector" id="warehouseSelector">
                 <div class="warehouse-option active" data-warehouse="TDB">KHO TDB</div>
-                <div class="warehouse-option active" data-warehouse="SAM">KHO SAM</div>
+                <div class="warehouse-option" data-warehouse="SAM">KHO SAM</div>
             </div>
         </div>
 
@@ -389,8 +389,8 @@
 
             // ---------- CONFIG: 2 kho với URL xuất bản chính xác ----------
             const WAREHOUSE_URLS = {
-                TDB: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS16evkAb1vdJkvwdyCOJf10_k5ONA_REYJ0_Cch1i0c-RrjYtcQoxqxXivlhvnUQ/pub?gid=270954585&single=true&output=csv',
-                SAM: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS16evkAb1vdJkvwdyCOJf10_k5ONA_REYJ0_Cch1i0c-RrjYtcQoxqxXivlhvnUQ/pub?gid=877859193&single=true&output=csv'
+                TDB: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS16evkAb1vdJkvwdyCOJf10_k5ONA_REYJ0_Cch1i0c-RrjYtcQoxqxXivlhvnUQ/pubhtml?gid=270954585&single=true&output=csv',
+                SAM: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS16evkAb1vdJkvwdyCOJf10_k5ONA_REYJ0_Cch1i0c-RrjYtcQoxqxXivlhvnUQ/pubhtml?gid=502589897&single=true&output=csv'
             };
 
             let currentWarehouse = 'TDB';   // 'TDB' hoặc 'SAM'
