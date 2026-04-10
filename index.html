@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>TDB Kho Giấy & Mực · GitHub JSON</title>
+    <title>Kho Giấy TDB & SAM</title>
     <!-- Google Font & modern reset -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
@@ -330,8 +330,8 @@
     <div class="dashboard">
         <div class="title-section">
             <h1>
-                📦 TDB Kho Giấy & Mực
-                <span>real-time</span>
+                📦 Tồn kho giấy TDB & SAM
+                <span>with Github</span>
             </h1>
             <div class="update-badge">
                 <span>⚡</span> dữ liệu từ GitHub JSON
@@ -373,7 +373,7 @@
         </div>
 
         <div class="footer-note">
-            <span>🔄 Dữ liệu được cập nhật tự động từ file Excel qua GitHub · Cập nhật mỗi khi tải trang</span>
+            <span>🔄 Dữ liệu được cập nhật tự động từ file Excel qua GitHub · Liên hệ Huy khi có lỗi</span>
         </div>
     </div>
 
@@ -383,7 +383,7 @@
 
             // ==================== CẤU HÌNH ====================
             // 👇👇👇 THAY URL NÀY BẰNG ĐƯỜNG DẪN ĐẾN FILE data.json TRÊN GITHUB CỦA BẠN 👇👇👇
-            const JSON_URL = 'https://raw.githubusercontent.com/huyvh-oss/kho-tdb/main/kho_data.json';
+            const JSON_URL = 'https://raw.githubusercontent.com/huyvh-oss/ton-kho-tdb/main/kho_data.json';
             // Tên sheet trong JSON (khớp với key do script Python tạo)
             const SHEET_KEYS = {
                 TDB: 'KHO TDB',
@@ -547,7 +547,7 @@
                 }
                 html += `<div style="margin-top: 20px; font-size: 0.9rem; color: #3a5e70; font-weight: 500; display: flex; justify-content: space-between;">
                             <span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm</span>
-                            <span>✔ Tồn >0: xanh &nbsp; ⚠ Tồn 0: đỏ</span>
+                            <span>✔ Nhớ chọn đúng kho cần tìm</span>
                          </div>`;
                 tableContainer.innerHTML = html;
             }
