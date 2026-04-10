@@ -3,621 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>Kho Giấy TDB & SAM</title>
-    <!-- Google Font & modern reset -->
+    <title>Tồn Kho TDB - Made by Huy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
-        /* ----- toàn bộ style giữ nguyên ----- */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #f6f9fc;
-            color: #1e293b;
-            line-height: 1.5;
-            padding: 24px 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .dashboard {
-            max-width: 1440px;
-            width: 100%;
-            background: white;
-            border-radius: 28px;
-            box-shadow: 0 15px 40px -10px rgba(0,20,30,0.12);
-            padding: 32px 32px 40px;
-            transition: all 0.2s;
-        }
-
-        @media (max-width: 640px) {
-            body { padding: 16px 12px; }
-            .dashboard { padding: 24px 18px; border-radius: 24px; }
-        }
-
-        .title-section {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 32px;
-            border-bottom: 2px solid #e9edf4;
-            padding-bottom: 20px;
-        }
-
-        h1 {
-            font-weight: 700;
-            font-size: 1.9rem;
-            letter-spacing: -0.02em;
-            color: #0a2c3d;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        h1 span {
-            background: #0f3b4f;
-            color: white;
-            font-size: 0.9rem;
-            font-weight: 600;
-            padding: 6px 14px;
-            border-radius: 60px;
-            letter-spacing: 0.3px;
-        }
-
-        .update-badge {
-            font-size: 0.85rem;
-            color: #52718c;
-            background: #f0f5fa;
-            padding: 8px 18px;
-            border-radius: 50px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .warehouse-row {
-            margin-bottom: 28px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            background: #f8fafd;
-            padding: 12px 24px;
-            border-radius: 60px;
-            border: 1px solid #e2edf4;
-        }
-        .warehouse-label {
-            font-weight: 600;
-            color: #144a62;
-            background: #eaf2f8;
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-        }
-        .warehouse-selector {
-            display: flex;
-            gap: 12px;
-            background: white;
-            border-radius: 50px;
-            padding: 4px;
-            border: 1px solid #cde0e9;
-        }
-        .warehouse-option {
-            padding: 8px 28px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.15s;
-            background: transparent;
-            color: #3f637b;
-        }
-        .warehouse-option.active {
-            background: #12799f;
-            color: white;
-            box-shadow: 0 2px 6px rgba(18,121,159,0.2);
-        }
-
-        .filter-container {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 16px 24px;
-            background: #fafdff;
-            padding: 20px 24px;
-            border-radius: 20px;
-            border: 1px solid #e2ecf2;
-            margin-bottom: 32px;
-            box-shadow: 0 2px 8px rgba(0,40,60,0.02);
-        }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .filter-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #3f637b;
-            background: #e3ecf3;
-            padding: 5px 12px;
-            border-radius: 30px;
-        }
-
-        select, input[type="text"] {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
-            background: white;
-            border: 1.5px solid #dae4ec;
-            border-radius: 40px;
-            padding: 10px 18px;
-            color: #0d384b;
-            font-weight: 500;
-            outline: none;
-            transition: 0.15s;
-            min-width: 220px;
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233f637b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 16px center;
-            background-size: 16px;
-        }
-
-        select {
-            padding-right: 44px;
-        }
-
-        input[type="text"] {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%234e7a97' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: left 16px center;
-            background-size: 18px;
-            padding-left: 48px;
-            min-width: 260px;
-        }
-
-        select:hover, input:hover { border-color: #3f9ec2; }
-        select:focus, input:focus { border-color: #12799f; box-shadow: 0 0 0 4px rgba(18,121,159,0.08); }
-
-        .reset-btn {
-            background: transparent;
-            border: 1.5px solid #cbd9e2;
-            border-radius: 40px;
-            padding: 10px 22px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: #3a5c70;
-            transition: 0.15s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            background: white;
-        }
-        .reset-btn:hover {
-            background: #edf3f8;
-            border-color: #7ea5b9;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 18px;
-            border: 1px solid #ebf0f5;
-            background: white;
-            margin-top: 8px;
-            box-shadow: 0 4px 14px rgba(0,30,45,0.02);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.95rem;
-            min-width: 600px;
-        }
-
-        th {
-            background: #f4f8fc;
-            font-weight: 600;
-            color: #144a62;
-            padding: 18px 16px;
-            text-align: left;
-            white-space: nowrap;
-            font-size: 0.9rem;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-            border-bottom: 2px solid #cde0e9;
-        }
-
-        td {
-            padding: 16px 16px;
-            border-bottom: 1px solid #eaf0f5;
-            vertical-align: middle;
-            color: #1f4155;
-            font-weight: 450;
-        }
-
-        tr:last-child td { border-bottom: none; }
-
-        .category-badge {
-            background: #e5f0f7;
-            color: #0a4b62;
-            padding: 5px 14px;
-            border-radius: 50px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            display: inline-block;
-            white-space: nowrap;
-        }
-
-        .code-cell {
-            font-family: 'SF Mono', 'Inter', monospace;
-            font-weight: 500;
-            letter-spacing: 0.2px;
-            color: #0b3a4e;
-        }
-
-        .stock {
-            font-weight: 700;
-            font-size: 1.05rem;
-            white-space: nowrap;
-        }
+        /* ----- giữ nguyên toàn bộ CSS từ file trước (đã có trong lịch sử) ----- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: #f6f9fc; color: #1e293b; line-height: 1.5; padding: 24px 20px; display: flex; flex-direction: column; align-items: center; }
+        .dashboard { max-width: 1440px; width: 100%; background: white; border-radius: 28px; box-shadow: 0 15px 40px -10px rgba(0,20,30,0.12); padding: 32px 32px 40px; }
+        @media (max-width: 640px) { body { padding: 16px 12px; } .dashboard { padding: 24px 18px; } }
+        .title-section { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; margin-bottom: 32px; border-bottom: 2px solid #e9edf4; padding-bottom: 20px; }
+        h1 { font-weight: 700; font-size: 1.9rem; color: #0a2c3d; display: flex; align-items: center; gap: 12px; }
+        h1 span { background: #0f3b4f; color: white; font-size: 0.9rem; font-weight: 600; padding: 6px 14px; border-radius: 60px; }
+        .update-badge { font-size: 0.85rem; color: #52718c; background: #f0f5fa; padding: 8px 18px; border-radius: 50px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; }
+        .warehouse-row { margin-bottom: 28px; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; background: #f8fafd; padding: 12px 24px; border-radius: 60px; border: 1px solid #e2edf4; }
+        .warehouse-label { font-weight: 600; color: #144a62; background: #eaf2f8; padding: 6px 14px; border-radius: 30px; font-size: 0.85rem; }
+        .warehouse-selector { display: flex; gap: 12px; background: white; border-radius: 50px; padding: 4px; border: 1px solid #cde0e9; }
+        .warehouse-option { padding: 8px 28px; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.15s; background: transparent; color: #3f637b; }
+        .warehouse-option.active { background: #12799f; color: white; box-shadow: 0 2px 6px rgba(18,121,159,0.2); }
+        .filter-container { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; background: #fafdff; padding: 20px 24px; border-radius: 20px; border: 1px solid #e2ecf2; margin-bottom: 32px; }
+        .filter-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .filter-label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #3f637b; background: #e3ecf3; padding: 5px 12px; border-radius: 30px; }
+        select, input[type="text"] { font-family: 'Inter', sans-serif; font-size: 0.95rem; background: white; border: 1.5px solid #dae4ec; border-radius: 40px; padding: 10px 18px; color: #0d384b; font-weight: 500; outline: none; transition: 0.15s; min-width: 220px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233f637b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; }
+        select { padding-right: 44px; }
+        input[type="text"] { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%234e7a97' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 16px center; background-size: 18px; padding-left: 48px; min-width: 260px; }
+        .reset-btn { background: transparent; border: 1.5px solid #cbd9e2; border-radius: 40px; padding: 10px 22px; font-weight: 600; font-size: 0.9rem; color: #3a5c70; display: flex; align-items: center; gap: 6px; cursor: pointer; background: white; }
+        .reset-btn:hover { background: #edf3f8; border-color: #7ea5b9; }
+        .table-wrapper { overflow-x: auto; border-radius: 18px; border: 1px solid #ebf0f5; background: white; margin-top: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; min-width: 600px; }
+        th { background: #f4f8fc; font-weight: 600; color: #144a62; padding: 18px 16px; text-align: left; border-bottom: 2px solid #cde0e9; }
+        td { padding: 16px 16px; border-bottom: 1px solid #eaf0f5; }
+        .category-badge { background: #e5f0f7; color: #0a4b62; padding: 5px 14px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
+        .code-cell { font-family: monospace; font-weight: 500; }
+        .stock { font-weight: 700; font-size: 1.05rem; white-space: nowrap; }
         .stock-positive { color: #0e7b5c; }
-        .stock-zero, .stock-negative { color: #c5352a; font-weight: 700; }
-
-        .empty-message {
-            padding: 48px 20px;
-            text-align: center;
-            color: #617e94;
-            font-size: 1rem;
-            background: #fbfeff;
-            border-radius: 18px;
-        }
-
-        .loading-indicator {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 50px 20px;
-            gap: 12px;
-            color: #2e6279;
-            font-weight: 500;
-        }
-        .spinner {
-            border: 3px solid #e1ecf2;
-            border-top: 3px solid #1b7c99;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            animation: spin 0.9s linear infinite;
-        }
+        .stock-zero { color: #c5352a; }
+        .empty-message, .loading-indicator, .info-banner { padding: 48px 20px; text-align: center; }
+        .loading-indicator { display: flex; justify-content: center; align-items: center; gap: 12px; }
+        .spinner { border: 3px solid #e1ecf2; border-top: 3px solid #1b7c99; border-radius: 50%; width: 28px; height: 28px; animation: spin 0.9s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .footer-note {
-            margin-top: 32px;
-            font-size: 0.8rem;
-            color: #5b798b;
-            display: flex;
-            justify-content: flex-end;
-            border-top: 1px solid #e1ebf0;
-            padding-top: 22px;
-        }
-
-        .error-banner {
-            background: #ffefed;
-            border-left: 6px solid #c5352a;
-            padding: 18px 24px;
-            border-radius: 16px;
-            color: #81261f;
-            font-weight: 500;
-            margin-bottom: 24px;
-        }
+        .error-banner { background: #ffefed; border-left: 6px solid #c5352a; padding: 18px 24px; border-radius: 16px; color: #81261f; text-align: left; }
+        .footer-note { margin-top: 32px; font-size: 0.8rem; color: #5b798b; display: flex; justify-content: flex-end; border-top: 1px solid #e1ebf0; padding-top: 22px; }
     </style>
 </head>
 <body>
-    <div class="dashboard">
-        <div class="title-section">
-            <h1>
-                📦 Tồn kho giấy TDB & SAM
-                <span>with Github</span>
-            </h1>
-            <div class="update-badge">
-                <span>⚡</span> dữ liệu từ GitHub JSON
-            </div>
-        </div>
-
-        <!-- Warehouse selector -->
-        <div class="warehouse-row">
-            <span class="warehouse-label">🏭 CHỌN KHO</span>
-            <div class="warehouse-selector" id="warehouseSelector">
-                <div class="warehouse-option active" data-warehouse="TDB">KHO TDB</div>
-                <div class="warehouse-option" data-warehouse="SAM">KHO SAM</div>
-            </div>
-        </div>
-
-        <!-- filter area -->
-        <div class="filter-container">
-            <div class="filter-group">
-                <span class="filter-label">📂 Danh mục</span>
-                <select id="categorySelect" aria-label="Lọc theo danh mục">
-                    <option value="ALL">⚡ Tất cả danh mục</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <span class="filter-label">🔍 Mã sản phẩm</span>
-                <input type="text" id="searchInput" placeholder="Nhập mã barcode, tên mã..." autocomplete="off">
-            </div>
-            <button class="reset-btn" id="resetFilterBtn">
-                ⟲ Đặt lại
-            </button>
-        </div>
-
-        <!-- table area -->
-        <div id="tableContainer">
-            <div class="loading-indicator">
-                <div class="spinner"></div>
-                <span>Đang tải dữ liệu từ GitHub…</span>
-            </div>
-        </div>
-
-        <div class="footer-note">
-            <span>🔄 Dữ liệu được cập nhật tự động từ file Excel qua GitHub · Liên hệ Huy khi có lỗi</span>
+<div class="dashboard">
+    <div class="title-section">
+        <h1>📦 Tồn kho TDB & SAM <span>with Github</span></h1>
+        <div class="update-badge">⚡ dữ liệu từ GitHub JSON</div>
+    </div>
+    <div class="warehouse-row">
+        <span class="warehouse-label">🏭 CHỌN KHO</span>
+        <div class="warehouse-selector" id="warehouseSelector">
+            <div class="warehouse-option active" data-warehouse="TDB">KHO TDB</div>
+            <div class="warehouse-option" data-warehouse="SAM">KHO SAM</div>
         </div>
     </div>
+    <div class="filter-container">
+        <div class="filter-group"><span class="filter-label">📂 Danh mục</span><select id="categorySelect"><option value="ALL">⚡ Tất cả danh mục</option></select></div>
+        <div class="filter-group"><span class="filter-label">🔍 Mã sản phẩm</span><input type="text" id="searchInput" placeholder="Nhập mã barcode, tên mã..." autocomplete="off"></div>
+        <button class="reset-btn" id="resetFilterBtn">⟲ Đặt lại</button>
+    </div>
+    <div id="tableContainer"><div class="loading-indicator"><div class="spinner"></div><span>Đang tải dữ liệu từ GitHub…</span></div></div>
+    <div class="footer-note">🔄 Dữ liệu được cập nhật tự động từ file Excel qua GitHub · Liên hệ Huy khi phát hiện lỗi</div>
+</div>
 
-    <script>
-        (function() {
-            'use strict';
+<script>
+(function() {
+    'use strict';
 
-            // ==================== CẤU HÌNH ====================
-            // 👇👇👇 THAY URL NÀY BẰNG ĐƯỜNG DẪN ĐẾN FILE data.json TRÊN GITHUB CỦA BẠN 👇👇👇
-            const JSON_URL = 'https://raw.githubusercontent.com/huyvh-oss/ton-kho-tdb/main/kho_data.json';
-            // Tên sheet trong JSON (khớp với key do script Python tạo)
-            const SHEET_KEYS = {
-                TDB: 'KHO TDB',
-                SAM: 'KHO SAM'
-            };
-            // Tên cột trong JSON (dựa trên header của Excel)
-            const COLUMN_MAPPING = {
-                category: 'Danh mục sản phẩm',
-                code: 'Mã sản phẩm',
-                quantity: 'Số lượng tồn',
-                unit: 'Đơn vị'
-            };
-            // ==================================================
+    // 👉 Đường dẫn JSON của bạn
+    const JSON_URL = 'https://raw.githubusercontent.com/huyvh-oss/ton-kho-tdb/main/kho_data.json';
+    const SHEET_KEYS = { TDB: 'KHO TDB', SAM: 'KHO SAM' };
+    // Tên cột trong JSON (sau khi script Python xuất ra)
+    const COL_MAPPING = {
+        category: 'DANH MỤC',
+        code: 'MÃ',
+        quantity: 'TỒN',
+        unit: 'ĐƠN VỊ'
+    };
 
-            let currentWarehouse = 'TDB';
-            let masterData = [];        // Mảng các object { category, code, quantity, unit, rawQ }
-            let uniqueCategories = new Set();
+    let currentWarehouse = 'TDB';
+    let masterData = [];
+    let uniqueCategories = new Set();
 
-            // DOM elements
-            const warehouseOptions = document.querySelectorAll('.warehouse-option');
-            const categorySelect = document.getElementById('categorySelect');
-            const searchInput = document.getElementById('searchInput');
-            const resetBtn = document.getElementById('resetFilterBtn');
-            const tableContainer = document.getElementById('tableContainer');
+    const warehouseOptions = document.querySelectorAll('.warehouse-option');
+    const categorySelect = document.getElementById('categorySelect');
+    const searchInput = document.getElementById('searchInput');
+    const resetBtn = document.getElementById('resetFilterBtn');
+    const tableContainer = document.getElementById('tableContainer');
 
-            // Helper: chuyển đổi số, giữ nguyên định dạng gốc (rawQ)
-            function parseQuantity(val) {
-                if (val === undefined || val === null) return 0;
-                const str = String(val).trim();
-                if (str === '' || str === '-' || str === '—' || str.toLowerCase() === 'null') return 0;
-                // Loại bỏ dấu phẩy phân cách hàng nghìn và chuyển dấu chấm thập phân
-                const normalized = str.replace(/,/g, '');
-                const num = parseFloat(normalized);
-                return isNaN(num) ? 0 : num;
+    function parseQuantity(val) {
+        if (val === undefined || val === null) return 0;
+        if (typeof val === 'number') return val;
+        const str = String(val).trim();
+        if (str === '' || str === '-' || str === '—') return 0;
+        const num = parseFloat(str.replace(/,/g, ''));
+        return isNaN(num) ? 0 : num;
+    }
+
+    async function fetchJSON(url, retries = 3) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const res = await fetch(url, { cache: 'no-store' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } catch (err) {
+                if (i === retries - 1) throw err;
+                await new Promise(r => setTimeout(r, 1000 * (i + 1)));
             }
+        }
+    }
 
-            // Tải dữ liệu JSON từ GitHub
-            async function fetchJSON(url, retries = 3) {
-                for (let i = 0; i < retries; i++) {
-                    try {
-                        const response = await fetch(url, { cache: 'no-store' });
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        const json = await response.json();
-                        return json;
-                    } catch (err) {
-                        console.warn(`Lần thử ${i+1} thất bại:`, err);
-                        if (i === retries - 1) throw err;
-                        await new Promise(r => setTimeout(r, 1000 * (i + 1)));
-                    }
-                }
+    function transformJsonToItems(jsonArray) {
+        if (!Array.isArray(jsonArray)) return [];
+        const items = [];
+        for (const row of jsonArray) {
+            let category = row[COL_MAPPING.category];
+            let code = row[COL_MAPPING.code];
+            let rawQ = row[COL_MAPPING.quantity];
+            let unit = row[COL_MAPPING.unit];
+            if (category === undefined) category = '';
+            if (code === undefined) code = '';
+            if (rawQ === undefined || rawQ === null) rawQ = '-';
+            if (unit === undefined) unit = '';
+            category = String(category).trim();
+            code = String(code).trim();
+            if (category === '' && code === '') continue;
+            if (category === '' || code === '') continue;
+            const quantity = parseQuantity(rawQ);
+            let rawQStr = (rawQ !== null && rawQ !== undefined) ? String(rawQ) : '-';
+            items.push({
+                category, code, quantity,
+                unit: String(unit).trim(),
+                rawQ: rawQStr === '' || rawQStr === '-' ? (quantity === 0 ? '0' : rawQStr) : rawQStr
+            });
+        }
+        return items;
+    }
+
+    async function loadInventory(warehouse) {
+        const sheetKey = SHEET_KEYS[warehouse];
+        if (!sheetKey) throw new Error(`Không có key cho kho ${warehouse}`);
+        const jsonData = await fetchJSON(JSON_URL);
+        const warehouseData = jsonData[sheetKey];
+        if (!warehouseData) throw new Error(`Không tìm thấy key "${sheetKey}" trong JSON. Các key: ${Object.keys(jsonData).join(', ')}`);
+        const items = transformJsonToItems(warehouseData);
+        if (items.length === 0) throw new Error(`Không có dữ liệu hợp lệ trong ${sheetKey}`);
+        return items;
+    }
+
+    function renderCategoryFilter() {
+        const cats = Array.from(uniqueCategories).sort((a,b) => a.localeCompare(b, 'vi'));
+        categorySelect.innerHTML = '<option value="ALL">⚡ Tất cả danh mục</option>';
+        cats.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            categorySelect.appendChild(opt);
+        });
+    }
+
+    function filterData() {
+        const cat = categorySelect.value;
+        const kw = searchInput.value.trim().toLowerCase();
+        return masterData.filter(item => {
+            if (cat !== 'ALL' && item.category !== cat) return false;
+            if (kw && !item.code.toLowerCase().includes(kw)) return false;
+            return true;
+        });
+    }
+
+    function escapeHTML(s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m] || m));
+    }
+
+    function renderTable(filtered) {
+        if (!filtered) filtered = masterData;
+        let html = '';
+        if (filtered.length === 0) {
+            html = `<div class="empty-message">📭 Không tìm thấy sản phẩm phù hợp.</div>`;
+        } else {
+            html = `<div class="table-wrapper"><table><thead><tr><th>Danh mục</th><th>Mã sản phẩm</th><th>Tồn kho</th></tr></thead><tbody>`;
+            for (const item of filtered) {
+                const stockClass = item.quantity > 0 ? 'stock-positive' : 'stock-zero';
+                let displayQty = item.rawQ;
+                if (item.quantity === 0) displayQty = '0';
+                const unitText = item.unit ? ` ${escapeHTML(item.unit)}` : '';
+                const stockWithUnit = `${escapeHTML(displayQty)}${unitText}`;
+                html += `<tr>
+                            <td><span class="category-badge">${escapeHTML(item.category)}</span></td>
+                            <td class="code-cell"><strong>${escapeHTML(item.code)}</strong></td>
+                            <td class="stock ${stockClass}">${stockWithUnit}</td>
+                          </td>`;
             }
+            html += `</tbody></table></div>`;
+        }
+        html += `<div style="margin-top:20px;display:flex;justify-content:space-between;"><span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm</span><span>✔ Tồn >0: xanh &nbsp; ⚠ Tồn 0: đỏ</span></div>`;
+        tableContainer.innerHTML = html;
+    }
 
-            // Chuyển đổi dữ liệu từ JSON (mảng các object) sang masterData
-            function transformJsonToItems(jsonArray, warehouseKey) {
-                if (!jsonArray || !Array.isArray(jsonArray) || jsonArray.length === 0) {
-                    console.warn(`Không có dữ liệu cho kho ${warehouseKey}`);
-                    return [];
-                }
-                const items = [];
-                for (const row of jsonArray) {
-                    const category = row[COLUMN_MAPPING.category] || '';
-                    const code = row[COLUMN_MAPPING.code] || '';
-                    const rawQ = row[COLUMN_MAPPING.quantity] !== undefined && row[COLUMN_MAPPING.quantity] !== null 
-                                ? String(row[COLUMN_MAPPING.quantity]).trim() : '-';
-                    const unit = row[COLUMN_MAPPING.unit] || '';
-                    if (category === '' && code === '') continue;
-                    if (category === '' || code === '') continue;
-                    const quantity = parseQuantity(rawQ);
-                    items.push({
-                        category: category,
-                        code: code,
-                        quantity: quantity,
-                        unit: unit,
-                        rawQ: rawQ === '' || rawQ === '-' ? (quantity === 0 ? '0' : rawQ) : rawQ
-                    });
-                }
-                return items;
-            }
+    async function refreshDashboard() {
+        tableContainer.innerHTML = `<div class="loading-indicator"><div class="spinner"></div><span>Đang tải kho ${currentWarehouse} từ GitHub…</span></div>`;
+        try {
+            const items = await loadInventory(currentWarehouse);
+            masterData = items;
+            uniqueCategories.clear();
+            items.forEach(i => uniqueCategories.add(i.category));
+            renderCategoryFilter();
+            categorySelect.value = 'ALL';
+            searchInput.value = '';
+            renderTable(masterData);
+        } catch (err) {
+            console.error(err);
+            tableContainer.innerHTML = `
+                <div class="error-banner">
+                    <strong>⛔ Không thể tải dữ liệu từ GitHub (kho ${currentWarehouse})</strong><br>
+                    • Đường dẫn JSON: <code>${JSON_URL}</code><br>
+                    • Chi tiết lỗi: ${escapeHTML(err.message)}<br>
+                    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
+                        <button onclick="location.reload()" style="background:#12799f;color:white;border:none;padding:10px 24px;border-radius:40px;cursor:pointer;">🔄 Tải lại trang</button>
+                        <button onclick="window.retryLoad()" style="background:#f0f5fa;color:#144a62;border:1.5px solid #cde0e9;padding:10px 24px;border-radius:40px;cursor:pointer;">⚡ Thử lại ngay</button>
+                    </div>
+                </div>`;
+            window.retryLoad = () => refreshDashboard();
+            masterData = [];
+            uniqueCategories.clear();
+            renderCategoryFilter();
+        }
+    }
 
-            // Tải dữ liệu cho kho hiện tại
-            async function loadInventory(warehouse) {
-                const sheetKey = SHEET_KEYS[warehouse];
-                if (!sheetKey) throw new Error(`Không xác định key cho kho ${warehouse}`);
-                const jsonData = await fetchJSON(JSON_URL);
-                // jsonData có cấu trúc { "KHO TDB": [...], "KHO SAM": [...] }
-                const warehouseData = jsonData[sheetKey];
-                if (!warehouseData) {
-                    throw new Error(`Không tìm thấy key "${sheetKey}" trong JSON. Các key hiện có: ${Object.keys(jsonData).join(', ')}`);
-                }
-                const items = transformJsonToItems(warehouseData, sheetKey);
-                if (items.length === 0) {
-                    throw new Error(`Không có dữ liệu hợp lệ trong kho "${sheetKey}"`);
-                }
-                return items;
-            }
+    function setWarehouse(wh) {
+        if (wh === currentWarehouse) return;
+        currentWarehouse = wh;
+        warehouseOptions.forEach(opt => {
+            if (opt.getAttribute('data-warehouse') === wh) opt.classList.add('active');
+            else opt.classList.remove('active');
+        });
+        refreshDashboard();
+    }
 
-            // Render dropdown danh mục
-            function renderCategoryFilter() {
-                const categories = Array.from(uniqueCategories).sort((a, b) => a.localeCompare(b, 'vi'));
-                categorySelect.innerHTML = '<option value="ALL">⚡ Tất cả danh mục</option>';
-                categories.forEach(cat => {
-                    const option = document.createElement('option');
-                    option.value = cat;
-                    option.textContent = cat;
-                    categorySelect.appendChild(option);
-                });
-            }
+    function bindEvents() {
+        warehouseOptions.forEach(opt => opt.addEventListener('click', () => setWarehouse(opt.getAttribute('data-warehouse'))));
+        categorySelect.addEventListener('change', () => { if (masterData.length) renderTable(filterData()); });
+        searchInput.addEventListener('input', () => { if (masterData.length) renderTable(filterData()); });
+        resetBtn.addEventListener('click', () => {
+            categorySelect.value = 'ALL';
+            searchInput.value = '';
+            if (masterData.length) renderTable(masterData);
+        });
+    }
 
-            // Lọc dữ liệu theo danh mục và từ khóa
-            function filterData() {
-                const selectedCat = categorySelect.value;
-                const keyword = searchInput.value.trim().toLowerCase();
-                return masterData.filter(item => {
-                    if (selectedCat !== 'ALL' && item.category !== selectedCat) return false;
-                    if (keyword !== '' && !item.code.toLowerCase().includes(keyword)) return false;
-                    return true;
-                });
-            }
-
-            // Escape HTML
-            function escapeHTML(str) {
-                if (!str) return '';
-                return String(str).replace(/[&<>]/g, function(m) {
-                    if (m === '&') return '&amp;';
-                    if (m === '<') return '&lt;';
-                    if (m === '>') return '&gt;';
-                    return m;
-                });
-            }
-
-            // Render bảng
-            function renderTable(filtered) {
-                if (!filtered) filtered = masterData;
-                let html = '';
-                if (filtered.length === 0) {
-                    html = `<div class="empty-message">
-                                <span style="font-size: 2rem; display: block; margin-bottom: 12px;">📭</span>
-                                Không tìm thấy sản phẩm phù hợp.<br> 
-                                Thử thay đổi bộ lọc hoặc danh mục.
-                            </div>`;
-                } else {
-                    html = `<div class="table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr><th>Danh mục</th><th>Mã sản phẩm</th><th>Tồn kho</th></tr>
-                                </thead>
-                                <tbody>`;
-                    for (const item of filtered) {
-                        const stockClass = item.quantity > 0 ? 'stock-positive' : 'stock-zero';
-                        let displayQty = item.rawQ;
-                        if (item.quantity === 0) displayQty = '0';
-                        const unitText = item.unit ? ` ${escapeHTML(item.unit)}` : '';
-                        const stockWithUnit = `${escapeHTML(displayQty)}${unitText}`;
-                        html += `<tr>
-                                    <td><span class="category-badge">${escapeHTML(item.category)}</span></td>
-                                    <td class="code-cell"><strong>${escapeHTML(item.code)}</strong></td>
-                                    <td class="stock ${stockClass}">${stockWithUnit}</td>
-                                </tr>`;
-                    }
-                    html += `</tbody></table></div>`;
-                }
-                html += `<div style="margin-top: 20px; font-size: 0.9rem; color: #3a5e70; font-weight: 500; display: flex; justify-content: space-between;">
-                            <span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm</span>
-                            <span>✔ Nhớ chọn đúng kho cần tìm</span>
-                         </div>`;
-                tableContainer.innerHTML = html;
-            }
-
-            // Refresh toàn bộ
-            async function refreshDashboard() {
-                tableContainer.innerHTML = `<div class="loading-indicator"><div class="spinner"></div><span>Đang tải kho ${currentWarehouse} từ GitHub…</span></div>`;
-                try {
-                    const items = await loadInventory(currentWarehouse);
-                    masterData = items;
-                    uniqueCategories.clear();
-                    items.forEach(item => uniqueCategories.add(item.category));
-                    renderCategoryFilter();
-                    categorySelect.value = 'ALL';
-                    searchInput.value = '';
-                    renderTable(masterData);
-                } catch (error) {
-                    console.error('Lỗi tải dữ liệu:', error);
-                    tableContainer.innerHTML = `
-                        <div class="error-banner">
-                            <strong>⛔ Không thể tải dữ liệu từ GitHub (kho ${currentWarehouse})</strong><br>
-                            • Kiểm tra kết nối mạng<br>
-                            • Đường dẫn JSON: <code style="background:#ffe0db;padding:4px 8px;border-radius:6px;">${JSON_URL}</code><br>
-                            • Chi tiết lỗi: ${escapeHTML(error.message || 'Không xác định')}<br>
-                            <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
-                                <button onclick="location.reload()" style="background:#12799f;color:white;border:none;padding:10px 24px;border-radius:40px;font-weight:600;cursor:pointer;">🔄 Tải lại trang</button>
-                                <button onclick="window.retryLoad()" style="background:#f0f5fa;color:#144a62;border:1.5px solid #cde0e9;padding:10px 24px;border-radius:40px;font-weight:600;cursor:pointer;">⚡ Thử lại ngay</button>
-                            </div>
-                        </div>`;
-                    window.retryLoad = () => refreshDashboard();
-                    masterData = [];
-                    uniqueCategories.clear();
-                    renderCategoryFilter();
-                }
-            }
-
-            // Chuyển kho
-            function setWarehouse(warehouse) {
-                if (warehouse === currentWarehouse) return;
-                currentWarehouse = warehouse;
-                warehouseOptions.forEach(opt => {
-                    if (opt.getAttribute('data-warehouse') === warehouse) {
-                        opt.classList.add('active');
-                    } else {
-                        opt.classList.remove('active');
-                    }
-                });
-                refreshDashboard();
-            }
-
-            // Sự kiện
-            function bindEvents() {
-                warehouseOptions.forEach(opt => {
-                    opt.addEventListener('click', () => {
-                        const warehouse = opt.getAttribute('data-warehouse');
-                        setWarehouse(warehouse);
-                    });
-                });
-                categorySelect.addEventListener('change', () => { if (masterData.length) renderTable(filterData()); });
-                searchInput.addEventListener('input', () => { if (masterData.length) renderTable(filterData()); });
-                resetBtn.addEventListener('click', () => {
-                    categorySelect.value = 'ALL';
-                    searchInput.value = '';
-                    if (masterData.length) renderTable(masterData);
-                });
-            }
-
-            bindEvents();
-            refreshDashboard();
-        })();
-    </script>
+    bindEvents();
+    refreshDashboard();
+})();
+</script>
 </body>
 </html>
