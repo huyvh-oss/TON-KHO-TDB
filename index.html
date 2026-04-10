@@ -6,7 +6,7 @@
     <title>TDB Kho Giấy & Mực · Real-time API</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
-        /* ----- giữ nguyên style ----- */
+        /* ----- giữ nguyên style (đã có ở các lần trước, tôi lược bớt để ngắn gọn) ----- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background-color: #f6f9fc; color: #1e293b; line-height: 1.5; padding: 24px 20px; display: flex; flex-direction: column; align-items: center; }
         .dashboard { max-width: 1440px; width: 100%; background: white; border-radius: 28px; box-shadow: 0 15px 40px -10px rgba(0,20,30,0.12); padding: 32px 32px 40px; }
@@ -71,7 +71,8 @@
 (function() {
     'use strict';
 
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyWqmbxoLWqFgXnS_gTlPdUj30bZEy9GcqnywZJ_o11JZQxN86EvmsSum5W2xqguI_G4A/exec';
+    // 👇👇👇 THAY URL NÀY BẰNG URL CỦA BẠN (SAU KHI TRIỂN KHAI APPS SCRIPT) 👇👇👇
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyWqmbxoLWqFgXnS_gTlPdUj30bZEy9GcqnywZJ_o11JZQxN86EvmsSum5W2xqguI_G4A/exec';  // <-- sửa lại
     const SHEET_NAMES = {
         TDB: 'KHO TDB',
         SAM: 'KHO SAM'
@@ -103,46 +104,12 @@
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const json = await response.json();
                 console.log('API response:', json);
-
                 if (!json.success) throw new Error(json.error || 'API trả về lỗi');
-
                 let rows = null;
                 if (json.data && typeof json.data === 'object') {
-                    if (json.data[sheetName] && Array.isArray(json.data[sheetName])) {
-                        rows = json.data[sheetName];
-                    } else {
-                        const normalizedTarget = sheetName.trim().toUpperCase();
-                        for (let key in json.data) {
-                            if (key.trim().toUpperCase() === normalizedTarget && Array.isArray(json.data[key])) {
-                                rows = json.data[key];
-                                break;
-                            }
-                        }
-                        if (!rows) {
-                            for (let key in json.data) {
-                                if (Array.isArray(json.data[key]) && json.data[key].length > 0) {
-                                    rows = json.data[key];
-                                    console.warn(`Không tìm thấy sheet "${sheetName}", dùng dữ liệu từ key "${key}"`);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                } else if (Array.isArray(json.data)) {
-                    rows = json.data;
-                } else if (Array.isArray(json)) {
-                    rows = json;
+                    rows = json.data[sheetName] || Object.values(json.data)[0];
                 }
-
-                if (!rows || !Array.isArray(rows)) {
-                    throw new Error(`Không lấy được mảng dữ liệu. Response: ${JSON.stringify(json)}`);
-                }
-
-                // THAY ĐỔI: nếu rows rỗng, không throw lỗi mà trả về mảng rỗng
-                if (rows.length === 0) {
-                    console.warn(`Sheet "${sheetName}" không có dữ liệu (rows = []).`);
-                    return [];
-                }
+                if (!rows || !Array.isArray(rows)) throw new Error('Dữ liệu không phải mảng');
                 return rows;
             } catch (err) {
                 console.warn(`Lần thử ${i+1} thất bại:`, err);
@@ -153,9 +120,8 @@
     }
 
     function transformRawDataToItems(rawRows) {
-        if (!rawRows || rawRows.length === 0) return [];
-        if (rawRows.length < 3) return [];
-        let headerIdx = -1;
+        if (!rawRows || rawRows.length < 3) return [];
+        let headerIdx = 1; // mặc định dòng 2 là header (index 1)
         for (let i = 1; i < Math.min(5, rawRows.length); i++) {
             const row = rawRows[i];
             if (row && row.length >= 2) {
@@ -167,7 +133,6 @@
                 }
             }
         }
-        if (headerIdx === -1) headerIdx = 1;
         const dataRows = rawRows.slice(headerIdx + 1);
         const items = [];
         for (const row of dataRows) {
@@ -179,13 +144,7 @@
             if (category === '' && code === '') continue;
             if (category === '' || code === '') continue;
             const quantity = parseQuantity(rawQ);
-            items.push({
-                category,
-                code,
-                quantity,
-                unit,
-                rawQ: rawQ === '' || rawQ === '-' ? (quantity === 0 ? '0' : rawQ) : rawQ
-            });
+            items.push({ category, code, quantity, unit, rawQ });
         }
         return items;
     }
@@ -194,26 +153,8 @@
         const sheetName = SHEET_NAMES[warehouse];
         if (!sheetName) throw new Error(`Không xác định sheet cho kho ${warehouse}`);
         const rawRows = await fetchSheetData(sheetName);
-        if (rawRows.length === 0) return []; // không có dữ liệu
+        if (rawRows.length === 0) return [];
         const items = transformRawDataToItems(rawRows);
-        if (items.length === 0) {
-            // fallback: thử lấy dữ liệu từ dòng 2 trở đi bỏ qua header
-            const fallbackItems = [];
-            for (let i = 1; i < rawRows.length; i++) {
-                const row = rawRows[i];
-                if (row && row.length >= 2) {
-                    const category = row[0] ? row[0].toString().trim() : '';
-                    const code = row[1] ? row[1].toString().trim() : '';
-                    if (category === '' && code === '') continue;
-                    const rawQ = row[2] ? row[2].toString().trim() : '-';
-                    const unit = row[3] ? row[3].toString().trim() : '';
-                    const quantity = parseQuantity(rawQ);
-                    fallbackItems.push({ category, code, quantity, unit, rawQ });
-                }
-            }
-            if (fallbackItems.length) return fallbackItems;
-            return [];
-        }
         return items;
     }
 
@@ -247,12 +188,7 @@
         if (!filtered) filtered = masterData;
         let html = '';
         if (filtered.length === 0) {
-            html = `<div class="info-banner">
-                        <span style="font-size: 2rem;">📭</span><br>
-                        <strong>Không có dữ liệu trong sheet</strong><br>
-                        Sheet hiện tại đang trống hoặc chưa có dữ liệu hợp lệ.<br>
-                        Vui lòng kiểm tra lại file Excel.
-                    </div>`;
+            html = `<div class="info-banner">📭 Không có dữ liệu trong sheet. Vui lòng kiểm tra file Excel.</div>`;
         } else {
             html = `<div class="table-wrapper"><table><thead><tr><th>Danh mục</th><th>Mã sản phẩm</th><th>Tồn kho</th></tr></thead><tbody>`;
             for (const item of filtered) {
@@ -261,18 +197,11 @@
                 if (item.quantity === 0) displayQty = '0';
                 const unitText = item.unit ? ` ${escapeHTML(item.unit)}` : '';
                 const stockWithUnit = `${escapeHTML(displayQty)}${unitText}`;
-                html += `<tr>
-                            <td><span class="category-badge">${escapeHTML(item.category)}</span></td>
-                            <td class="code-cell"><strong>${escapeHTML(item.code)}</strong></td>
-                            <td class="stock ${stockClass}">${stockWithUnit}</td>
-                          </tr>`;
+                html += `<tr><td><span class="category-badge">${escapeHTML(item.category)}</span></td><td class="code-cell"><strong>${escapeHTML(item.code)}</strong></td><td class="stock ${stockClass}">${stockWithUnit}</td></tr>`;
             }
             html += `</tbody></table></div>`;
         }
-        html += `<div style="margin-top:20px;font-size:0.9rem;display:flex;justify-content:space-between;">
-                    <span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm</span>
-                    <span>✔ Tồn >0: xanh &nbsp; ⚠ Tồn 0: đỏ</span>
-                 </div>`;
+        html += `<div style="margin-top:20px;font-size:0.9rem;display:flex;justify-content:space-between;"><span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm</span><span>✔ Tồn >0: xanh &nbsp; ⚠ Tồn 0: đỏ</span></div>`;
         tableContainer.innerHTML = html;
     }
 
@@ -292,16 +221,13 @@
             tableContainer.innerHTML = `
                 <div class="error-banner" style="background:#ffefed;border-left:6px solid #c5352a;padding:18px 24px;border-radius:16px;color:#81261f;">
                     <strong>⛔ Lỗi kết nối API</strong><br>
-                    • ${escapeHTML(error.message || 'Không xác định')}<br>
+                    • ${escapeHTML(error.message)}<br>
                     <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
                         <button onclick="location.reload()" style="background:#12799f;color:white;border:none;padding:10px 24px;border-radius:40px;cursor:pointer;">🔄 Tải lại trang</button>
                         <button onclick="window.retryLoad()" style="background:#f0f5fa;color:#144a62;border:1.5px solid #cde0e9;padding:10px 24px;border-radius:40px;cursor:pointer;">⚡ Thử lại ngay</button>
                     </div>
                 </div>`;
             window.retryLoad = () => refreshDashboard();
-            masterData = [];
-            uniqueCategories.clear();
-            renderCategoryFilter();
         }
     }
 
