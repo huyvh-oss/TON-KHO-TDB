@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>Tồn Kho TDB - Made by Huy</title>
+    <title>Tồn kho TDB & SAM · with GitHub JSON</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
-        /* ----- giữ nguyên toàn bộ CSS từ file trước (đã có trong lịch sử) ----- */
+        /* ----- giữ nguyên toàn bộ CSS (đã có) ----- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background-color: #f6f9fc; color: #1e293b; line-height: 1.5; padding: 24px 20px; display: flex; flex-direction: column; align-items: center; }
         .dashboard { max-width: 1440px; width: 100%; background: white; border-radius: 28px; box-shadow: 0 15px 40px -10px rgba(0,20,30,0.12); padding: 32px 32px 40px; }
@@ -42,13 +42,14 @@
         .spinner { border: 3px solid #e1ecf2; border-top: 3px solid #1b7c99; border-radius: 50%; width: 28px; height: 28px; animation: spin 0.9s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .error-banner { background: #ffefed; border-left: 6px solid #c5352a; padding: 18px 24px; border-radius: 16px; color: #81261f; text-align: left; }
+        .last-update { text-align: right; font-size: 0.75rem; color: #5b798b; margin-top: 8px; margin-bottom: 12px; }
         .footer-note { margin-top: 32px; font-size: 0.8rem; color: #5b798b; display: flex; justify-content: flex-end; border-top: 1px solid #e1ebf0; padding-top: 22px; }
     </style>
 </head>
 <body>
 <div class="dashboard">
     <div class="title-section">
-        <h1>📦 Tồn kho TDB & SAM <span>with Github</span></h1>
+        <h1>📦 Dữ liệu kho giấy TDB & SAM <span>real-time</span></h1>
         <div class="update-badge">⚡ dữ liệu từ GitHub JSON</div>
     </div>
     <div class="warehouse-row">
@@ -58,23 +59,24 @@
             <div class="warehouse-option" data-warehouse="SAM">KHO SAM</div>
         </div>
     </div>
+    <!-- Dòng hiển thị thời gian cập nhật cuối cùng -->
+    <div class="last-update" id="lastUpdateTime">🕒 Đang tải thông tin cập nhật...</div>
     <div class="filter-container">
         <div class="filter-group"><span class="filter-label">📂 Danh mục</span><select id="categorySelect"><option value="ALL">⚡ Tất cả danh mục</option></select></div>
         <div class="filter-group"><span class="filter-label">🔍 Mã sản phẩm</span><input type="text" id="searchInput" placeholder="Nhập mã barcode, tên mã..." autocomplete="off"></div>
         <button class="reset-btn" id="resetFilterBtn">⟲ Đặt lại</button>
     </div>
     <div id="tableContainer"><div class="loading-indicator"><div class="spinner"></div><span>Đang tải dữ liệu từ GitHub…</span></div></div>
-    <div class="footer-note">🔄 Dữ liệu được cập nhật tự động từ file Excel qua GitHub · Liên hệ Huy khi phát hiện lỗi</div>
+    <div class="footer-note">🔄 Dữ liệu được cập nhật tự động từ file Excel qua GitHub · Cập nhật mỗi khi tải trang</div>
 </div>
 
 <script>
 (function() {
     'use strict';
 
-    // 👉 Đường dẫn JSON của bạn
     const JSON_URL = 'https://raw.githubusercontent.com/huyvh-oss/ton-kho-tdb/main/kho_data.json';
+    const API_URL = 'https://api.github.com/repos/huyvh-oss/ton-kho-tdb/commits?path=kho_data.json&page=1&per_page=1';
     const SHEET_KEYS = { TDB: 'KHO TDB', SAM: 'KHO SAM' };
-    // Tên cột trong JSON (sau khi script Python xuất ra)
     const COL_MAPPING = {
         category: 'DANH MỤC',
         code: 'MÃ',
@@ -91,6 +93,27 @@
     const searchInput = document.getElementById('searchInput');
     const resetBtn = document.getElementById('resetFilterBtn');
     const tableContainer = document.getElementById('tableContainer');
+    const lastUpdateSpan = document.getElementById('lastUpdateTime');
+
+    // Lấy thời gian commit cuối cùng của file JSON
+    async function fetchLastUpdateTime() {
+        try {
+            const res = await fetch(API_URL, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            if (data && data.length > 0 && data[0].commit && data[0].commit.committer) {
+                const dateStr = data[0].commit.committer.date;
+                const date = new Date(dateStr);
+                const formatted = date.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+                lastUpdateSpan.innerHTML = `🕒 Cập nhật lần cuối: ${formatted}`;
+            } else {
+                lastUpdateSpan.innerHTML = `🕒 Không lấy được thời gian cập nhật`;
+            }
+        } catch (err) {
+            console.warn('Lỗi lấy last update:', err);
+            lastUpdateSpan.innerHTML = `🕒 Không thể lấy thời gian cập nhật`;
+        }
+    }
 
     function parseQuantity(val) {
         if (val === undefined || val === null) return 0;
@@ -195,7 +218,7 @@
                             <td><span class="category-badge">${escapeHTML(item.category)}</span></td>
                             <td class="code-cell"><strong>${escapeHTML(item.code)}</strong></td>
                             <td class="stock ${stockClass}">${stockWithUnit}</td>
-                          </td>`;
+                          </tr>`;
             }
             html += `</tbody></table></div>`;
         }
@@ -214,6 +237,8 @@
             categorySelect.value = 'ALL';
             searchInput.value = '';
             renderTable(masterData);
+            // Sau khi tải dữ liệu thành công, cập nhật thời gian
+            fetchLastUpdateTime();
         } catch (err) {
             console.error(err);
             tableContainer.innerHTML = `
@@ -230,6 +255,7 @@
             masterData = [];
             uniqueCategories.clear();
             renderCategoryFilter();
+            fetchLastUpdateTime(); // vẫn cố lấy thời gian
         }
     }
 
