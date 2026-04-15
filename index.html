@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>Tồn kho TDB & SAM · with GitHub</title>
+    <title>TDB Kho Giấy & Mực · GitHub JSON</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
-        /* ----- giữ nguyên toàn bộ CSS (đã có) ----- */
+        /* ----- toàn bộ CSS giữ nguyên ----- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background-color: #f6f9fc; color: #1e293b; line-height: 1.5; padding: 24px 20px; display: flex; flex-direction: column; align-items: center; }
         .dashboard { max-width: 1440px; width: 100%; background: white; border-radius: 28px; box-shadow: 0 15px 40px -10px rgba(0,20,30,0.12); padding: 32px 32px 40px; }
@@ -49,8 +49,8 @@
 <body>
 <div class="dashboard">
     <div class="title-section">
-        <h1>📦 Dữ liệu kho giấy TDB & SAM <span>Made by Huy</span></h1>
-        <div class="update-badge">⚡ dữ liệu từ GitHub</div>
+        <h1>📦 TDB Kho Giấy & Mực <span>real-time</span></h1>
+        <div class="update-badge">⚡ dữ liệu từ GitHub JSON</div>
     </div>
     <div class="warehouse-row">
         <span class="warehouse-label">🏭 CHỌN KHO</span>
@@ -59,7 +59,6 @@
             <div class="warehouse-option" data-warehouse="SAM">KHO SAM</div>
         </div>
     </div>
-    <!-- Dòng hiển thị thời gian cập nhật cuối cùng -->
     <div class="last-update" id="lastUpdateTime">🕒 Đang tải thông tin cập nhật...</div>
     <div class="filter-container">
         <div class="filter-group"><span class="filter-label">📂 Danh mục</span><select id="categorySelect"><option value="ALL">⚡ Tất cả danh mục</option></select></div>
@@ -67,7 +66,7 @@
         <button class="reset-btn" id="resetFilterBtn">⟲ Đặt lại</button>
     </div>
     <div id="tableContainer"><div class="loading-indicator"><div class="spinner"></div><span>Đang tải dữ liệu từ GitHub…</span></div></div>
-    <div class="footer-note">🔄 Dữ liệu được cập nhật tự động từ Excel qua GitHub · Liên hệ Huy khi gặp lỗi</div>
+    <div class="footer-note">🔄 Dữ liệu được cập nhật tự động từ file Excel qua GitHub · Cập nhật mỗi khi tải trang</div>
 </div>
 
 <script>
@@ -75,7 +74,8 @@
     'use strict';
 
     const JSON_URL = 'https://raw.githubusercontent.com/huyvh-oss/ton-kho-tdb/main/kho_data.json';
-    const API_URL = 'https://api.github.com/repos/huyvh-oss/ton-kho-tdb/commits?path=kho_data.json&page=1&per_page=1';
+    // API lấy commit mới nhất của file (có cache buster)
+    const getApiUrl = () => `https://api.github.com/repos/huyvh-oss/ton-kho-tdb/commits?path=kho_data.json&page=1&per_page=1&_=${Date.now()}`;
     const SHEET_KEYS = { TDB: 'KHO TDB', SAM: 'KHO SAM' };
     const COL_MAPPING = {
         category: 'DANH MỤC',
@@ -95,10 +95,11 @@
     const tableContainer = document.getElementById('tableContainer');
     const lastUpdateSpan = document.getElementById('lastUpdateTime');
 
-    // Lấy thời gian commit cuối cùng của file JSON
+    // Lấy thời gian commit cuối cùng (không cache)
     async function fetchLastUpdateTime() {
         try {
-            const res = await fetch(API_URL, { cache: 'no-store' });
+            const url = getApiUrl();
+            const res = await fetch(url, { cache: 'no-store' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             if (data && data.length > 0 && data[0].commit && data[0].commit.committer) {
@@ -107,11 +108,11 @@
                 const formatted = date.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
                 lastUpdateSpan.innerHTML = `🕒 Cập nhật lần cuối: ${formatted}`;
             } else {
-                lastUpdateSpan.innerHTML = `🕒 Không lấy được thời gian cập nhật`;
+                lastUpdateSpan.innerHTML = `🕒 Không lấy được thời gian cập nhật (không có commit)`;
             }
         } catch (err) {
             console.warn('Lỗi lấy last update:', err);
-            lastUpdateSpan.innerHTML = `🕒 Không thể lấy thời gian cập nhật`;
+            lastUpdateSpan.innerHTML = `🕒 Không thể lấy thời gian cập nhật (${err.message})`;
         }
     }
 
@@ -222,7 +223,7 @@
             }
             html += `</tbody></table></div>`;
         }
-        html += `<div style="margin-top:20px;display:flex;justify-content:space-between;"><span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm</span><span>✔ Nhớ chọn đúng kho cần tìm</span></div>`;
+        html += `<div style="margin-top:20px;display:flex;justify-content:space-between;"><span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm</span><span>✔ Tồn >0: xanh &nbsp; ⚠ Tồn 0: đỏ</span></div>`;
         tableContainer.innerHTML = html;
     }
 
@@ -237,8 +238,8 @@
             categorySelect.value = 'ALL';
             searchInput.value = '';
             renderTable(masterData);
-            // Sau khi tải dữ liệu thành công, cập nhật thời gian
-            fetchLastUpdateTime();
+            // Cập nhật thời gian sau khi tải dữ liệu thành công
+            await fetchLastUpdateTime();
         } catch (err) {
             console.error(err);
             tableContainer.innerHTML = `
@@ -255,7 +256,7 @@
             masterData = [];
             uniqueCategories.clear();
             renderCategoryFilter();
-            fetchLastUpdateTime(); // vẫn cố lấy thời gian
+            fetchLastUpdateTime(); // vẫn thử lấy thời gian
         }
     }
 
