@@ -1,118 +1,844 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>TDB Kho Giấy & Mực · GitHub JSON</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <title>Tồn kho TDB &amp; SAM · Dashboard</title>
+    <meta name="description" content="Hệ thống quản lý tồn kho giấy TDB và SAM – dữ liệu thời gian thực từ GitHub">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
-        /* ----- toàn bộ CSS giữ nguyên ----- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background-color: #f6f9fc; color: #1e293b; line-height: 1.5; padding: 24px 20px; display: flex; flex-direction: column; align-items: center; }
-        .dashboard { max-width: 1440px; width: 100%; background: white; border-radius: 28px; box-shadow: 0 15px 40px -10px rgba(0,20,30,0.12); padding: 32px 32px 40px; }
-        @media (max-width: 640px) { body { padding: 16px 12px; } .dashboard { padding: 24px 18px; } }
-        .title-section { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; margin-bottom: 32px; border-bottom: 2px solid #e9edf4; padding-bottom: 20px; }
-        h1 { font-weight: 700; font-size: 1.9rem; color: #0a2c3d; display: flex; align-items: center; gap: 12px; }
-        h1 span { background: #0f3b4f; color: white; font-size: 0.9rem; font-weight: 600; padding: 6px 14px; border-radius: 60px; }
-        .update-badge { font-size: 0.85rem; color: #52718c; background: #f0f5fa; padding: 8px 18px; border-radius: 50px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; }
-        .warehouse-row { margin-bottom: 28px; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; background: #f8fafd; padding: 12px 24px; border-radius: 60px; border: 1px solid #e2edf4; }
-        .warehouse-label { font-weight: 600; color: #144a62; background: #eaf2f8; padding: 6px 14px; border-radius: 30px; font-size: 0.85rem; }
-        .warehouse-selector { display: flex; gap: 12px; background: white; border-radius: 50px; padding: 4px; border: 1px solid #cde0e9; }
-        .warehouse-option { padding: 8px 28px; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.15s; background: transparent; color: #3f637b; }
-        .warehouse-option.active { background: #12799f; color: white; box-shadow: 0 2px 6px rgba(18,121,159,0.2); }
-        .filter-container { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; background: #fafdff; padding: 20px 24px; border-radius: 20px; border: 1px solid #e2ecf2; margin-bottom: 32px; }
-        .filter-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .filter-label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #3f637b; background: #e3ecf3; padding: 5px 12px; border-radius: 30px; }
-        select, input[type="text"] { font-family: 'Inter', sans-serif; font-size: 0.95rem; background: white; border: 1.5px solid #dae4ec; border-radius: 40px; padding: 10px 18px; color: #0d384b; font-weight: 500; outline: none; transition: 0.15s; min-width: 220px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233f637b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; }
-        select { padding-right: 44px; }
-        input[type="text"] { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%234e7a97' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 16px center; background-size: 18px; padding-left: 48px; min-width: 260px; }
-        .reset-btn { background: transparent; border: 1.5px solid #cbd9e2; border-radius: 40px; padding: 10px 22px; font-weight: 600; font-size: 0.9rem; color: #3a5c70; display: flex; align-items: center; gap: 6px; cursor: pointer; background: white; }
-        .reset-btn:hover { background: #edf3f8; border-color: #7ea5b9; }
-        .table-wrapper { overflow-x: auto; border-radius: 18px; border: 1px solid #ebf0f5; background: white; margin-top: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; min-width: 600px; }
-        th { background: #f4f8fc; font-weight: 600; color: #144a62; padding: 18px 16px; text-align: left; border-bottom: 2px solid #cde0e9; }
-        td { padding: 16px 16px; border-bottom: 1px solid #eaf0f5; }
-        .category-badge { background: #e5f0f7; color: #0a4b62; padding: 5px 14px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
-        .code-cell { font-family: monospace; font-weight: 500; }
-        .stock { font-weight: 700; font-size: 1.05rem; white-space: nowrap; }
-        .stock-positive { color: #0e7b5c; }
-        .stock-zero { color: #c5352a; }
-        .empty-message, .loading-indicator, .info-banner { padding: 48px 20px; text-align: center; }
-        .loading-indicator { display: flex; justify-content: center; align-items: center; gap: 12px; }
-        .spinner { border: 3px solid #e1ecf2; border-top: 3px solid #1b7c99; border-radius: 50%; width: 28px; height: 28px; animation: spin 0.9s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .error-banner { background: #ffefed; border-left: 6px solid #c5352a; padding: 18px 24px; border-radius: 16px; color: #81261f; text-align: left; }
-        .last-update { text-align: right; font-size: 0.75rem; color: #5b798b; margin-top: 8px; margin-bottom: 12px; }
-        .footer-note { margin-top: 32px; font-size: 0.8rem; color: #5b798b; display: flex; justify-content: flex-end; border-top: 1px solid #e1ebf0; padding-top: 22px; }
+        /* ============================================================
+           DESIGN SYSTEM
+           Enterprise Glassmorphism · SaaS Dashboard · Soft Neumorphism
+           Blue-gradient Action UI
+        ============================================================ */
+        :root {
+            /* — Surfaces — */
+            --bg-base:         #edf1f8;
+            --bg-surface:      rgba(255, 255, 255, 0.82);
+            --bg-surface-2:    rgba(248, 250, 253, 0.75);
+            --bg-overlay:      rgba(255, 255, 255, 0.55);
+
+            /* — Borders — */
+            --border-glass:    rgba(255, 255, 255, 0.80);
+            --border-subtle:   rgba(0,   0,   0,  0.055);
+            --border-mid:      rgba(0,   0,   0,  0.09);
+
+            /* — Shadows (multi-layer, soft) — */
+            --shadow-xs:  0 1px 2px  rgba(0,0,0,.04);
+            --shadow-sm:  0 2px 8px  rgba(0,0,0,.06),
+                          0 1px 2px  rgba(0,0,0,.04);
+            --shadow-md:  0 4px 16px rgba(0,0,0,.07),
+                          0 1px 4px  rgba(0,0,0,.04);
+            --shadow-lg:  0 8px 32px rgba(0,0,0,.08),
+                          0 2px 8px  rgba(0,0,0,.04),
+                          inset 0 1px 0 rgba(255,255,255,.8);
+            --shadow-xl:  0 16px 48px rgba(0,0,0,.10),
+                          0 4px  12px rgba(0,0,0,.05),
+                          inset 0 1px 0 rgba(255,255,255,.8);
+
+            /* — Radii — */
+            --r-sm:   10px;
+            --r-md:   14px;
+            --r-lg:   20px;
+            --r-xl:   24px;
+            --r-pill: 9999px;
+
+            /* — Brand palette — */
+            --blue-50:    #eff6ff;
+            --blue-100:   #dbeafe;
+            --blue-400:   #60a5fa;
+            --blue-500:   #3b82f6;
+            --blue-600:   #2563eb;
+            --purple-400: #a78bfa;
+            --purple-500: #8b5cf6;
+            --green-400:  #4ade80;
+            --green-500:  #22c55e;
+            --red-400:    #f87171;
+            --red-500:    #ef4444;
+
+            /* — Typography — */
+            --text-primary:   #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary:  #94a3b8;
+            --text-muted:     #cbd5e1;
+
+            /* — Gradients — */
+            --grad-action:  linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --grad-bg:      linear-gradient(155deg, #e6ecf6 0%, #edf2fc 45%, #ede8f7 100%);
+            --grad-header:  linear-gradient(135deg, #1e3a5f 0%, #312e81 100%);
+            --grad-green:   linear-gradient(135deg, #22c55e, #16a34a);
+            --grad-surface: linear-gradient(160deg, rgba(255,255,255,.9), rgba(255,255,255,.7));
+        }
+
+        *, *::before, *::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--grad-bg);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.55;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ── App Shell ── */
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px 28px 44px;
+            min-height: 100vh;
+        }
+
+        /* ══════════════════════════════════════════
+           TOP NAV
+        ══════════════════════════════════════════ */
+        .topnav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            background: var(--bg-surface);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--r-xl);
+            padding: 14px 22px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .brand-icon {
+            width: 42px; height: 42px;
+            background: var(--grad-action);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.15rem;
+            box-shadow: 0 4px 14px rgba(59,130,246,.38),
+                        0 1px  3px rgba(0,0,0,.12);
+            flex-shrink: 0;
+        }
+
+        .brand-text h1 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.025em;
+            line-height: 1.2;
+        }
+
+        .brand-text p {
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+            font-weight: 400;
+            margin-top: 2px;
+            letter-spacing: 0.01em;
+        }
+
+        .topnav-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* live badge */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(34,197,94,.10);
+            border: 1px solid rgba(34,197,94,.22);
+            border-radius: var(--r-pill);
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #15803d;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .live-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--green-500);
+            animation: pulse-dot 2.4s ease infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%,100% { box-shadow: 0 0 0 0   rgba(34,197,94,.6); }
+            50%      { box-shadow: 0 0 0 5px rgba(34,197,94,.0); }
+        }
+
+        .time-tag {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            background: rgba(0,0,0,.04);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-pill);
+            padding: 6px 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        /* ══════════════════════════════════════════
+           MAIN CARD
+        ══════════════════════════════════════════ */
+        .main-card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(24px) saturate(170%);
+            -webkit-backdrop-filter: blur(24px) saturate(170%);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--r-xl);
+            box-shadow: var(--shadow-xl);
+            padding: 30px 32px 36px;
+            flex: 1;
+        }
+
+        /* ── Inner section header ── */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+
+        .section-eyebrow {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.9px;
+            color: var(--text-tertiary);
+        }
+
+        /* ── Warehouse tab switcher ── */
+        .warehouse-tabs {
+            display: inline-flex;
+            background: rgba(0,0,0,.045);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            padding: 4px;
+            gap: 3px;
+        }
+
+        .warehouse-option {
+            padding: 9px 26px;
+            border-radius: 10px;
+            font-size: 0.83rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(.4,0,.2,1);
+            user-select: none;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+        }
+
+        .warehouse-option:hover:not(.active) {
+            background: rgba(0,0,0,.06);
+            color: var(--text-primary);
+        }
+
+        .warehouse-option.active {
+            background: var(--grad-action);
+            color: #fff;
+            box-shadow: 0 3px 14px rgba(59,130,246,.40),
+                        0 1px  3px rgba(0,0,0,.12);
+        }
+
+        /* ── Update row ── */
+        .update-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.76rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            margin: 16px 0 22px;
+            padding: 10px 16px;
+            background: rgba(0,0,0,.025);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-sm);
+        }
+
+        .update-row svg { flex-shrink: 0; opacity: .55; }
+
+        /* ══════════════════════════════════════════
+           FILTER STRIP
+        ══════════════════════════════════════════ */
+        .filter-strip {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 12px;
+            background: var(--bg-surface-2);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-lg);
+            padding: 14px 20px;
+            margin-bottom: 24px;
+        }
+
+        .filter-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-tertiary);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .vsep {
+            width: 1px; height: 22px;
+            background: var(--border-mid);
+            flex-shrink: 0;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ── Inputs ── */
+        select, input[type="text"] {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            background: #fff;
+            border: 1.5px solid var(--border-mid);
+            border-radius: var(--r-sm);
+            padding: 9px 16px;
+            color: var(--text-primary);
+            font-weight: 500;
+            outline: none;
+            transition: border-color .18s, box-shadow .18s;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            box-shadow: var(--shadow-xs);
+        }
+
+        select {
+            min-width: 205px;
+            padding-right: 38px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 13px center;
+            background-size: 14px;
+        }
+
+        input[type="text"] {
+            min-width: 250px;
+            padding-left: 40px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 13px center;
+            background-size: 15px;
+        }
+
+        select:hover, input[type="text"]:hover { border-color: var(--blue-400); }
+        select:focus, input[type="text"]:focus  {
+            border-color: var(--blue-500);
+            box-shadow: 0 0 0 3px rgba(59,130,246,.13), var(--shadow-xs);
+        }
+
+        /* ── Reset button ── */
+        #resetFilterBtn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 1.5px solid var(--border-mid);
+            border-radius: var(--r-sm);
+            padding: 9px 18px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.83rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all .18s cubic-bezier(.4,0,.2,1);
+            white-space: nowrap;
+            box-shadow: var(--shadow-xs);
+        }
+
+        #resetFilterBtn:hover {
+            background: var(--grad-action);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(59,130,246,.35);
+            transform: translateY(-1px);
+        }
+
+        /* ══════════════════════════════════════════
+           TABLE
+        ══════════════════════════════════════════ */
+        .table-wrapper {
+            border-radius: var(--r-lg);
+            border: 1px solid var(--border-subtle);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        .table-scroll::-webkit-scrollbar { height: 5px; }
+        .table-scroll::-webkit-scrollbar-track { background: transparent; }
+        .table-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,.14);
+            border-radius: 99px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 520px;
+        }
+
+        thead {
+            background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+        }
+
+        th {
+            padding: 13px 20px;
+            text-align: left;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.85px;
+            color: var(--text-tertiary);
+            border-bottom: 1px solid var(--border-subtle);
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(0,0,0,.04);
+            transition: background .12s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+
+        tbody tr:hover {
+            background: linear-gradient(to right,
+                rgba(59,130,246,.035),
+                rgba(139,92,246,.018));
+        }
+
+        td {
+            padding: 14px 20px;
+            vertical-align: middle;
+        }
+
+        /* category badge */
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #eff6ff, #f5f3ff);
+            border: 1px solid rgba(99,102,241,.15);
+            color: #4338ca;
+            padding: 4px 12px;
+            border-radius: var(--r-pill);
+            font-size: 0.74rem;
+            font-weight: 600;
+            white-space: nowrap;
+            letter-spacing: 0.01em;
+        }
+
+        /* code cell */
+        .code-cell strong {
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            letter-spacing: 0.01em;
+        }
+
+        /* stock */
+        .stock {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            white-space: nowrap;
+        }
+
+        .stock::before {
+            content: '';
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .stock-positive {
+            color: #15803d;
+        }
+        .stock-positive::before {
+            background: var(--green-500);
+            box-shadow: 0 0 0 3px rgba(34,197,94,.18);
+        }
+
+        .stock-zero {
+            color: #b91c1c;
+        }
+        .stock-zero::before {
+            background: var(--red-500);
+            box-shadow: 0 0 0 3px rgba(239,68,68,.18);
+        }
+
+        /* ── Table footer ── */
+        .table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 16px 2px 0;
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+        .table-footer strong { color: var(--text-primary); font-weight: 700; }
+
+        /* ══════════════════════════════════════════
+           STATES: Loading / Empty / Error
+        ══════════════════════════════════════════ */
+        .loading-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            gap: 18px;
+        }
+
+        .spinner-ring {
+            width: 52px; height: 52px;
+            border-radius: 18px;
+            background: var(--grad-action);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 28px rgba(59,130,246,.35);
+        }
+
+        .spinner {
+            border: 2.5px solid rgba(255,255,255,.28);
+            border-top: 2.5px solid #fff;
+            border-radius: 50%;
+            width: 24px; height: 24px;
+            animation: spin .85s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* empty */
+        .empty-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 76px 20px;
+            gap: 13px;
+        }
+
+        .empty-icon {
+            width: 60px; height: 60px;
+            background: rgba(0,0,0,.035);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-lg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+        }
+
+        .empty-message p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .empty-message p:last-child {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* error */
+        .error-banner {
+            background: linear-gradient(135deg, #fff5f5, #fef2f2);
+            border: 1px solid rgba(239,68,68,.2);
+            border-left: 4px solid var(--red-500);
+            border-radius: var(--r-md);
+            padding: 22px 26px;
+            color: #991b1b;
+        }
+
+        .error-banner strong {
+            display: block;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            color: #7f1d1d;
+        }
+
+        .error-banner code {
+            background: rgba(239,68,68,.1);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            word-break: break-all;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--grad-action);
+            color: #fff;
+            border: none;
+            border-radius: var(--r-sm);
+            padding: 10px 22px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(59,130,246,.35);
+            transition: opacity .15s, transform .15s, box-shadow .15s;
+        }
+
+        .btn-primary:hover {
+            opacity: .92;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(59,130,246,.42);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            color: var(--text-secondary);
+            border: 1.5px solid var(--border-mid);
+            border-radius: var(--r-sm);
+            padding: 10px 22px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--blue-400);
+            color: var(--blue-600);
+        }
+
+        /* ══════════════════════════════════════════
+           APP FOOTER
+        ══════════════════════════════════════════ */
+        .app-footer {
+            text-align: center;
+            font-size: 0.74rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            padding-top: 4px;
+            letter-spacing: 0.01em;
+        }
+
+        /* ══════════════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .app-shell  { padding: 14px 15px 36px; gap: 14px; }
+            .main-card  { padding: 20px 18px 28px; }
+            .topnav     { padding: 12px 16px; }
+            .filter-strip { padding: 12px 14px; }
+            select, input[type="text"] { min-width: 0; width: 100%; }
+            .vsep { display: none; }
+            .section-header { flex-direction: column; align-items: flex-start; }
+        }
+
+        @media (max-width: 480px) {
+            .brand-text p { display: none; }
+            .time-tag     { display: none; }
+            .warehouse-option { padding: 8px 16px; font-size: 0.78rem; }
+        }
     </style>
 </head>
 <body>
-<div class="dashboard">
-    <div class="title-section">
-        <h1>📦 TDB Kho Giấy & Mực <span>real-time</span></h1>
-        <div class="update-badge">⚡ dữ liệu từ GitHub JSON</div>
-    </div>
-    <div class="warehouse-row">
-        <span class="warehouse-label">🏭 CHỌN KHO</span>
-        <div class="warehouse-selector" id="warehouseSelector">
-            <div class="warehouse-option active" data-warehouse="TDB">KHO TDB</div>
-            <div class="warehouse-option" data-warehouse="SAM">KHO SAM</div>
+
+<div class="app-shell">
+
+    <!-- ═══ TOP NAV ═══ -->
+    <nav class="topnav">
+        <div class="brand">
+            <div class="brand-icon">📦</div>
+            <div class="brand-text">
+                <h1>Kho giấy TDB &amp; SAM</h1>
+                <p>Quản lý tồn kho · Dữ liệu thời gian thực</p>
+            </div>
         </div>
-    </div>
-    <div class="last-update" id="lastUpdateTime">🕒 Đang tải thông tin cập nhật...</div>
-    <div class="filter-container">
-        <div class="filter-group"><span class="filter-label">📂 Danh mục</span><select id="categorySelect"><option value="ALL">⚡ Tất cả danh mục</option></select></div>
-        <div class="filter-group"><span class="filter-label">🔍 Mã sản phẩm</span><input type="text" id="searchInput" placeholder="Nhập mã barcode, tên mã..." autocomplete="off"></div>
-        <button class="reset-btn" id="resetFilterBtn">⟲ Đặt lại</button>
-    </div>
-    <div id="tableContainer"><div class="loading-indicator"><div class="spinner"></div><span>Đang tải dữ liệu từ GitHub…</span></div></div>
-    <div class="footer-note">🔄 Dữ liệu được cập nhật tự động từ file Excel qua GitHub · Cập nhật mỗi khi tải trang</div>
+
+        <div class="topnav-right">
+            <div class="live-badge">
+                <span class="live-dot"></span>
+                GitHub Live
+            </div>
+            <div class="time-tag" id="lastUpdateTime">🕒 Đang tải...</div>
+        </div>
+    </nav>
+
+    <!-- ═══ MAIN CARD ═══ -->
+    <main class="main-card">
+
+        <!-- Warehouse selector -->
+        <div class="section-header">
+            <span class="section-eyebrow">🏭 Chọn kho</span>
+            <div class="warehouse-tabs" id="warehouseSelector">
+                <div class="warehouse-option active" data-warehouse="TDB">KHO TDB</div>
+                <div class="warehouse-option"        data-warehouse="SAM">KHO SAM</div>
+            </div>
+        </div>
+
+        <!-- Last update -->
+        <div class="update-row">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span id="lastUpdateText">Đang lấy thông tin cập nhật...</span>
+        </div>
+
+        <!-- Filter strip -->
+        <div class="filter-strip">
+            <span class="filter-label">Lọc</span>
+            <div class="vsep"></div>
+
+            <div class="filter-group">
+                <span class="filter-label">📂 Danh mục</span>
+                <select id="categorySelect">
+                    <option value="ALL">Tất cả danh mục</option>
+                </select>
+            </div>
+
+            <div class="vsep"></div>
+
+            <div class="filter-group">
+                <span class="filter-label">🔍 Mã SP</span>
+                <input type="text" id="searchInput"
+                       placeholder="Nhập mã barcode, tên mã..."
+                       autocomplete="off">
+            </div>
+
+            <button id="resetFilterBtn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="1 4 1 10 7 10"/>
+                    <path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+                </svg>
+                Đặt lại
+            </button>
+        </div>
+
+        <!-- Dynamic table area -->
+        <div id="tableContainer">
+            <div class="loading-indicator">
+                <div class="spinner-ring"><div class="spinner"></div></div>
+                <span class="loading-text">Đang tải dữ liệu từ GitHub…</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="app-footer">
+        🔄 Dữ liệu đồng bộ tự động từ Excel qua GitHub &nbsp;·&nbsp; Made by Huy
+    </footer>
+
 </div>
 
+<!-- ═══════════════════════════════════════════════════
+     JAVASCRIPT – Logic giữ nguyên hoàn toàn
+═══════════════════════════════════════════════════ -->
 <script>
-(function() {
+(function () {
     'use strict';
 
     const JSON_URL = 'https://raw.githubusercontent.com/huyvh-oss/ton-kho-tdb/main/kho_data.json';
-    // API lấy commit mới nhất của file (có cache buster)
-    const getApiUrl = () => `https://api.github.com/repos/huyvh-oss/ton-kho-tdb/commits?path=kho_data.json&page=1&per_page=1&_=${Date.now()}`;
-    const SHEET_KEYS = { TDB: 'KHO TDB', SAM: 'KHO SAM' };
+    const API_URL  = 'https://api.github.com/repos/huyvh-oss/ton-kho-tdb/commits?path=kho_data.json&page=1&per_page=1';
+
+    const SHEET_KEYS  = { TDB: 'KHO TDB', SAM: 'KHO SAM' };
     const COL_MAPPING = {
         category: 'DANH MỤC',
-        code: 'MÃ',
+        code:     'MÃ',
         quantity: 'TỒN',
-        unit: 'ĐƠN VỊ'
+        unit:     'ĐƠN VỊ'
     };
 
     let currentWarehouse = 'TDB';
-    let masterData = [];
+    let masterData       = [];
     let uniqueCategories = new Set();
 
     const warehouseOptions = document.querySelectorAll('.warehouse-option');
-    const categorySelect = document.getElementById('categorySelect');
-    const searchInput = document.getElementById('searchInput');
-    const resetBtn = document.getElementById('resetFilterBtn');
-    const tableContainer = document.getElementById('tableContainer');
-    const lastUpdateSpan = document.getElementById('lastUpdateTime');
+    const categorySelect   = document.getElementById('categorySelect');
+    const searchInput      = document.getElementById('searchInput');
+    const resetBtn         = document.getElementById('resetFilterBtn');
+    const tableContainer   = document.getElementById('tableContainer');
+    const lastUpdateTime   = document.getElementById('lastUpdateTime');
+    const lastUpdateText   = document.getElementById('lastUpdateText');
 
-    // Lấy thời gian commit cuối cùng (không cache)
+    // ── Lấy thời gian commit cuối từ GitHub API ──
     async function fetchLastUpdateTime() {
         try {
-            const url = getApiUrl();
-            const res = await fetch(url, { cache: 'no-store' });
+            const res = await fetch(API_URL, { cache: 'no-store' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             if (data && data.length > 0 && data[0].commit && data[0].commit.committer) {
-                const dateStr = data[0].commit.committer.date;
-                const date = new Date(dateStr);
+                const date = new Date(data[0].commit.committer.date);
                 const formatted = date.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-                lastUpdateSpan.innerHTML = `🕒 Cập nhật lần cuối: ${formatted}`;
+                lastUpdateText.textContent = `Cập nhật lần cuối: ${formatted}`;
+                lastUpdateTime.textContent = `🕒 ${formatted}`;
             } else {
-                lastUpdateSpan.innerHTML = `🕒 Không lấy được thời gian cập nhật (không có commit)`;
+                lastUpdateText.textContent = 'Không lấy được thời gian cập nhật';
+                lastUpdateTime.textContent = '🕒 --';
             }
         } catch (err) {
             console.warn('Lỗi lấy last update:', err);
-            lastUpdateSpan.innerHTML = `🕒 Không thể lấy thời gian cập nhật (${err.message})`;
+            lastUpdateText.textContent = 'Không thể lấy thời gian cập nhật';
+            lastUpdateTime.textContent = '🕒 --';
         }
     }
 
@@ -143,23 +869,25 @@
         const items = [];
         for (const row of jsonArray) {
             let category = row[COL_MAPPING.category];
-            let code = row[COL_MAPPING.code];
-            let rawQ = row[COL_MAPPING.quantity];
-            let unit = row[COL_MAPPING.unit];
+            let code     = row[COL_MAPPING.code];
+            let rawQ     = row[COL_MAPPING.quantity];
+            let unit     = row[COL_MAPPING.unit];
             if (category === undefined) category = '';
-            if (code === undefined) code = '';
-            if (rawQ === undefined || rawQ === null) rawQ = '-';
-            if (unit === undefined) unit = '';
+            if (code     === undefined) code     = '';
+            if (rawQ     === undefined || rawQ === null) rawQ = '-';
+            if (unit     === undefined) unit     = '';
             category = String(category).trim();
-            code = String(code).trim();
+            code     = String(code).trim();
             if (category === '' && code === '') continue;
-            if (category === '' || code === '') continue;
+            if (category === '' || code === '')  continue;
             const quantity = parseQuantity(rawQ);
             let rawQStr = (rawQ !== null && rawQ !== undefined) ? String(rawQ) : '-';
             items.push({
                 category, code, quantity,
                 unit: String(unit).trim(),
-                rawQ: rawQStr === '' || rawQStr === '-' ? (quantity === 0 ? '0' : rawQStr) : rawQStr
+                rawQ: rawQStr === '' || rawQStr === '-'
+                    ? (quantity === 0 ? '0' : rawQStr)
+                    : rawQStr
             });
         }
         return items;
@@ -170,15 +898,17 @@
         if (!sheetKey) throw new Error(`Không có key cho kho ${warehouse}`);
         const jsonData = await fetchJSON(JSON_URL);
         const warehouseData = jsonData[sheetKey];
-        if (!warehouseData) throw new Error(`Không tìm thấy key "${sheetKey}" trong JSON. Các key: ${Object.keys(jsonData).join(', ')}`);
+        if (!warehouseData)
+            throw new Error(`Không tìm thấy key "${sheetKey}" trong JSON. Các key: ${Object.keys(jsonData).join(', ')}`);
         const items = transformJsonToItems(warehouseData);
-        if (items.length === 0) throw new Error(`Không có dữ liệu hợp lệ trong ${sheetKey}`);
+        if (items.length === 0)
+            throw new Error(`Không có dữ liệu hợp lệ trong ${sheetKey}`);
         return items;
     }
 
     function renderCategoryFilter() {
-        const cats = Array.from(uniqueCategories).sort((a,b) => a.localeCompare(b, 'vi'));
-        categorySelect.innerHTML = '<option value="ALL">⚡ Tất cả danh mục</option>';
+        const cats = Array.from(uniqueCategories).sort((a, b) => a.localeCompare(b, 'vi'));
+        categorySelect.innerHTML = '<option value="ALL">Tất cả danh mục</option>';
         cats.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c;
@@ -189,7 +919,7 @@
 
     function filterData() {
         const cat = categorySelect.value;
-        const kw = searchInput.value.trim().toLowerCase();
+        const kw  = searchInput.value.trim().toLowerCase();
         return masterData.filter(item => {
             if (cat !== 'ALL' && item.category !== cat) return false;
             if (kw && !item.code.toLowerCase().includes(kw)) return false;
@@ -199,36 +929,59 @@
 
     function escapeHTML(s) {
         if (!s) return '';
-        return String(s).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m] || m));
+        return String(s).replace(/[&<>]/g,
+            m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
     }
 
     function renderTable(filtered) {
         if (!filtered) filtered = masterData;
         let html = '';
+
         if (filtered.length === 0) {
-            html = `<div class="empty-message">📭 Không tìm thấy sản phẩm phù hợp.</div>`;
+            html = `<div class="empty-message">
+                        <div class="empty-icon">📭</div>
+                        <p>Không tìm thấy sản phẩm phù hợp</p>
+                        <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                    </div>`;
         } else {
-            html = `<div class="table-wrapper"><table><thead><tr><th>Danh mục</th><th>Mã sản phẩm</th><th>Tồn kho</th></tr></thead><tbody>`;
+            html = `<div class="table-wrapper"><div class="table-scroll">
+                    <table>
+                      <thead><tr>
+                        <th>Danh mục</th>
+                        <th>Mã sản phẩm</th>
+                        <th>Tồn kho</th>
+                      </tr></thead>
+                      <tbody>`;
+
             for (const item of filtered) {
                 const stockClass = item.quantity > 0 ? 'stock-positive' : 'stock-zero';
-                let displayQty = item.rawQ;
-                if (item.quantity === 0) displayQty = '0';
-                const unitText = item.unit ? ` ${escapeHTML(item.unit)}` : '';
-                const stockWithUnit = `${escapeHTML(displayQty)}${unitText}`;
+                const displayQty = item.quantity === 0 ? '0' : item.rawQ;
+                const unitText   = item.unit ? ` ${escapeHTML(item.unit)}` : '';
+                const stockFull  = `${escapeHTML(displayQty)}${unitText}`;
                 html += `<tr>
-                            <td><span class="category-badge">${escapeHTML(item.category)}</span></td>
-                            <td class="code-cell"><strong>${escapeHTML(item.code)}</strong></td>
-                            <td class="stock ${stockClass}">${stockWithUnit}</td>
-                          </tr>`;
+                           <td><span class="category-badge">${escapeHTML(item.category)}</span></td>
+                           <td class="code-cell"><strong>${escapeHTML(item.code)}</strong></td>
+                           <td><span class="stock ${stockClass}">${stockFull}</span></td>
+                         </tr>`;
             }
-            html += `</tbody></table></div>`;
+
+            html += `</tbody></table></div></div>`;
         }
-        html += `<div style="margin-top:20px;display:flex;justify-content:space-between;"><span>📋 Tổng số: <strong>${filtered.length}</strong> sản phẩm</span><span>✔ Tồn >0: xanh &nbsp; ⚠ Tồn 0: đỏ</span></div>`;
+
+        html += `<div class="table-footer">
+                   <span>📋 Tổng: <strong>${filtered.length}</strong> sản phẩm</span>
+                   <span>✔ Nhớ chọn đúng kho cần tìm</span>
+                 </div>`;
+
         tableContainer.innerHTML = html;
     }
 
     async function refreshDashboard() {
-        tableContainer.innerHTML = `<div class="loading-indicator"><div class="spinner"></div><span>Đang tải kho ${currentWarehouse} từ GitHub…</span></div>`;
+        tableContainer.innerHTML = `
+            <div class="loading-indicator">
+                <div class="spinner-ring"><div class="spinner"></div></div>
+                <span class="loading-text">Đang tải kho ${currentWarehouse} từ GitHub…</span>
+            </div>`;
         try {
             const items = await loadInventory(currentWarehouse);
             masterData = items;
@@ -236,27 +989,26 @@
             items.forEach(i => uniqueCategories.add(i.category));
             renderCategoryFilter();
             categorySelect.value = 'ALL';
-            searchInput.value = '';
+            searchInput.value    = '';
             renderTable(masterData);
-            // Cập nhật thời gian sau khi tải dữ liệu thành công
-            await fetchLastUpdateTime();
+            fetchLastUpdateTime();
         } catch (err) {
             console.error(err);
             tableContainer.innerHTML = `
                 <div class="error-banner">
-                    <strong>⛔ Không thể tải dữ liệu từ GitHub (kho ${currentWarehouse})</strong><br>
+                    <strong>⛔ Không thể tải dữ liệu từ GitHub (kho ${currentWarehouse})</strong>
                     • Đường dẫn JSON: <code>${JSON_URL}</code><br>
-                    • Chi tiết lỗi: ${escapeHTML(err.message)}<br>
-                    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
-                        <button onclick="location.reload()" style="background:#12799f;color:white;border:none;padding:10px 24px;border-radius:40px;cursor:pointer;">🔄 Tải lại trang</button>
-                        <button onclick="window.retryLoad()" style="background:#f0f5fa;color:#144a62;border:1.5px solid #cde0e9;padding:10px 24px;border-radius:40px;cursor:pointer;">⚡ Thử lại ngay</button>
+                    • Chi tiết lỗi: ${escapeHTML(err.message)}
+                    <div class="error-actions">
+                        <button class="btn-primary" onclick="location.reload()">🔄 Tải lại trang</button>
+                        <button class="btn-secondary" onclick="window._retry()">⚡ Thử lại ngay</button>
                     </div>
                 </div>`;
-            window.retryLoad = () => refreshDashboard();
+            window._retry = () => refreshDashboard();
             masterData = [];
             uniqueCategories.clear();
             renderCategoryFilter();
-            fetchLastUpdateTime(); // vẫn thử lấy thời gian
+            fetchLastUpdateTime();
         }
     }
 
@@ -271,12 +1023,18 @@
     }
 
     function bindEvents() {
-        warehouseOptions.forEach(opt => opt.addEventListener('click', () => setWarehouse(opt.getAttribute('data-warehouse'))));
-        categorySelect.addEventListener('change', () => { if (masterData.length) renderTable(filterData()); });
-        searchInput.addEventListener('input', () => { if (masterData.length) renderTable(filterData()); });
+        warehouseOptions.forEach(opt =>
+            opt.addEventListener('click', () => setWarehouse(opt.getAttribute('data-warehouse')))
+        );
+        categorySelect.addEventListener('change', () => {
+            if (masterData.length) renderTable(filterData());
+        });
+        searchInput.addEventListener('input', () => {
+            if (masterData.length) renderTable(filterData());
+        });
         resetBtn.addEventListener('click', () => {
             categorySelect.value = 'ALL';
-            searchInput.value = '';
+            searchInput.value    = '';
             if (masterData.length) renderTable(masterData);
         });
     }
